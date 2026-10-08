@@ -1,14 +1,14 @@
 # 🛡️ TrustGate (Enclave)
 
 > **Zero-Trust AI Security Gateway & Fraud Risk Control Plane for Autonomous Agents**  
-> *Sub-millisecond wire-speed inspection, two-way reversible PII vaulting, tool-call AST firewalls, fraud velocity radar, and cryptographic Merkle provenance.*
+> *Sub-millisecond wire-speed inspection, two-way reversible PII vaulting, tool-call AST firewalls, fraud velocity radar, universal email & URL verification, and cryptographic Merkle provenance.*
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-amber.svg)](https://opensource.org/licenses/MIT)
-[![Latency](https://img.shields.io/badge/Overhead-0.24ms%20p99-emerald.svg)](https://github.com/Jathin-stack/TrustGate)
+[![Latency SLA](https://img.shields.io/badge/Overhead-0.24ms%20p99-emerald.svg)](https://github.com/Jathin-stack/TrustGate)
 [![OWASP Coverage](https://img.shields.io/badge/OWASP%20LLM%20Top%2010-LLM01%20|%20LLM02%20|%20LLM06%20|%20LLM08-rose.svg)](https://owasp.org/www-project-top-10-for-large-language-model-applications/)
 [![Audit Chain](https://img.shields.io/badge/Audit%20Ledger-SHA--256%20Merkle-amber.svg)](https://github.com/Jathin-stack/TrustGate)
 [![Database](https://img.shields.io/badge/Telemetry-Supabase%20Realtime-3ECF8E.svg)](https://supabase.com)
-[![React](https://img.shields.io/badge/UI-React%2018%20|%20Vite%20|%20Tailwind%20v4-61DAFB.svg)](https://vitejs.dev/)
+[![UI](https://img.shields.io/badge/UI-React%2018%20|%20Vite%20|%20Tailwind%20v4-61DAFB.svg)](https://vitejs.dev/)
 
 ---
 
@@ -24,7 +24,12 @@
   - [4. Forensic Email & URL Phishing Radar](#4-forensic-email--url-phishing-radar)
   - [5. Prompt Injection & Jailbreak Neutralizer](#5-prompt-injection--jailbreak-neutralizer)
   - [6. Immutable SHA-256 Merkle Audit Ledger](#6-immutable-sha-256-merkle-audit-ledger)
-- [Live Dashboard & Design Aesthetics](#-live-dashboard--design-aesthetics)
+- [Universal Email & URL Safety Checker](#-universal-email--url-safety-checker)
+- [Operator Authentication Gate & Banani Theme](#-operator-authentication-gate--banani-theme)
+  - [Zero-Trust Operator Authentication Gate](#zero-trust-operator-authentication-gate)
+  - [Hover-Expanding Sidebar](#hover-expanding-sidebar)
+  - [Operator Clearance Profile](#operator-clearance-profile)
+  - [Enclave Gateway Settings](#enclave-gateway-settings)
 - [1-Line Drop-In SDK Integration](#-1-line-drop-in-sdk-integration)
 - [Getting Started & Local Setup](#-getting-started--local-setup)
 - [Automated Verification Test Suite](#-automated-verification-test-suite)
@@ -37,7 +42,7 @@
 
 ## ⚡ Overview
 
-**TrustGate (Enclave)** is an enterprise-grade AI security control plane that sits as a transparent, high-performance reverse proxy between autonomous AI agents and upstream LLMs (OpenAI, Anthropic, Gemini, LangChain, LlamaIndex).
+**TrustGate (Enclave)** is an enterprise-grade AI security control plane that operates as a transparent, high-performance reverse proxy between autonomous AI agents and upstream LLMs (OpenAI, Anthropic, Gemini, LangChain, LlamaIndex).
 
 While traditional Web Application Firewalls (WAFs) only inspect static HTTP parameters, TrustGate enforces **zero-trust guardrails directly on prompt tokens, tool invocations, and agent behaviors** with sub-millisecond overhead (**0.24ms benchmarked**, consuming less than 1% of application latency budgets).
 
@@ -157,64 +162,104 @@ flowchart TD
 
 ---
 
-## 🎨 Live Dashboard & Design Aesthetics
+## 🔍 Universal Email & URL Safety Checker
 
-The frontend dashboard implements a high-performance design inspired by dark obsidian aesthetics ([Banani Prototype](https://app.banani.co/prototype/bVIqX48dxQJI)):
+TrustGate includes an instant, zero-latency safety engine accessible both via REST API and the interactive dashboard:
 
-- **Canvas Palette**: Deep Obsidian Charcoal (`#0A0A0B`), warm charcoal panels (`#141110`), solar ember accents (`#F59E0B`), warm coral alerts (`#F43F5E`), and emerald verification badges (`#10B981`).
-- **Hover-Expanding Sidebar Navigation**:
-  - Compact icon mode (`w-[72px]`) by default for maximum screen real estate.
-  - Expands smoothly on mouse hover to full width (`w-[280px]`) with zero main canvas reflow or jitter.
-  - Grouped navigation sections:
-    - **CORE GATEWAY**: `01 · Control Center`, `02 · Fraud Command`, `Email & URL Radar`
-    - **TESTING & COMPLIANCE**: `03 · Attack Sandbox`, `04 · Policy Matrix`, `05 · Merkle Ledger`
-    - **MANAGEMENT & CLEARANCE**: `Operator Profile`, `Gateway Settings`
-  - Footer operator status pill with live session key, quick settings trigger, and sign-out action.
-- **Operator Authentication Flow (Login & Register)**:
-  - Enterprise cryptographic verification modal inspired by the Banani prototype.
-  - **Login Mode**: Operator email, master passphrase, FIDO2 hardware key indicator, fast 1-click demo login (`Alex Chen · L4 Clearance`), and link to register.
-  - **Register Mode**: Full name, enterprise organization, clearance level dropdown (`L1 Gateway Operator` to `L4 Enclave Crypto Officer`), password, and link back to sign-in.
-- **Dedicated Operator Profile Page**:
-  - Clearance level banner (`L4 · ENCLAVE CRYPTO OFFICER`), TLS 1.3 wire-speed tunnel status, and IP binding.
-  - Cryptographic session public keys with one-click copy and instant key re-signing / rotation.
-  - RBAC permission matrix and chronological decision audit logs.
-- **Enclave Gateway Settings View**:
-  - **Runtime Posture**: Fail-Closed vs. Fail-Open toggle, sub-millisecond SLA hard cap (20ms ceiling), AES-256-GCM reversible vault switch.
-  - **Model Proxy Routing**: Upstream endpoint configuration, Anthropic Claude fallback provider, daily token budget fuses, and recursion sponge depth caps.
-  - **Incident Webhook Dispatch**: Real-time Slack webhook and PagerDuty routing with configurable minimum alert severity.
-  - **Secret Key Rotation**: Master live key rotation with automatic 60-minute sunset grace periods.
-- **Hero Orbit Core ($1120 \times 560$ SVG)**:
-  - Central multi-orbit pulsing kernel with glowing SVG Bézier connector traces.
-  - 4 floating satellite node cards:
-    - **Node 01**: PII & Session Vault
-    - **Node 02**: Autonomous Tool Firewall
-    - **Node 03**: Velocity Intelligence
-    - **Node 04**: Merkle Crypto Ledger
-- **Control Center & Telemetry Stream**: Real-time table fed by Supabase Realtime WebSocket subscriptions.
-- **Split-Pane Attack Sandbox**: One-click attack presets with live visualizer showing pipeline defense progression.
-- **One-Click Policy Matrix**: Toggle compliance postures between HIPAA, PCI-DSS, Code Agent Strict, and Open Research.
+```http
+POST /api/v1/fraud/quick-check
+Content-Type: application/json
+
+{ "target": "support@paypa1-security.xyz" }
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "verdict": "UNSAFE",
+  "badge": "MALICIOUS / HIGH RISK",
+  "risk_score": 1.0,
+  "category": "BRAND_TYPOSQUATTING_IMPERSONATION",
+  "reasons": [
+    "HIGH_RISK_TLD: Sender domain uses top-level domain '.xyz' with elevated abuse incidence.",
+    "BRAND_TYPOSQUATTING_IMPERSONATION: Domain @paypa1-security.xyz mimics trusted authority 'paypal.com'."
+  ]
+}
+```
+
+### Coverage Matrix (13/13 Verified Scenarios)
+
+| Input Sample | Detection Category | Verdict |
+| :--- | :--- | :---: |
+| `developer@apple.com` | Verified Enterprise Communication | ✅ **SAFE** |
+| `user@gmail.com` | Clean Public Communication | ✅ **SAFE** |
+| `fraudster@tempmail.com` | Disposable Burner Sender Domain | ❌ **UNSAFE** |
+| `support@paypa1-security.xyz` | Brand Typosquatting / Character Substitution | ❌ **UNSAFE** |
+| Coercive Phishing Email Body | Aggressive Urgency Cues & Malicious Links | ❌ **UNSAFE** |
+| `https://google.com` | Verified Clean Authority | ✅ **SAFE** |
+| `https://github.com/Jathin-stack/TrustGate` | Verified Clean Source Code Repository | ✅ **SAFE** |
+| `http://192.168.1.104/login.php` | Direct IP Host Obfuscation (DNS Evasion) | ❌ **UNSAFE** |
+| `https://paypal-account-verify.xyz/login` | Abuse TLD & Brand Phishing Mimicry | ❌ **UNSAFE** |
+| `https://free-installer-tools.net/update.exe` | Drive-By Executable Malware Delivery | ❌ **UNSAFE** |
+| `https://bit.ly/secure-login-3819` | Opaque URL Shortener (Blind Destination) | ⚠️ **SUSPICIOUS** |
+
+---
+
+## 🎨 Operator Authentication Gate & Banani Theme
+
+The frontend is styled strictly after the [Banani Prototype](https://app.banani.co/prototype/bVIqX48dxQJI), using deep obsidian charcoal (`#09090b`), solar amber glows (`#F59E0B`), warm corals (`#F43F5E`), and emerald verification badges.
+
+### Zero-Trust Operator Authentication Gate
+- **Strict Cryptographic Enforcement**: Unauthenticated sessions are barred from accessing gateway controls.
+- **Specific Error Pointing & Access Denial**:
+  - **Unregistered Operator**: Highlights email input in red with `ERR_UNKNOWN_OPERATOR_DENIED`.
+  - **Passphrase Signature Mismatch**: Highlights passphrase input in red with `ERR_CRYPTO_SIGNATURE_MISMATCH`.
+  - **Disposable Email Burner**: Rejects temporary domains with `ERR_DISPOSABLE_DOMAIN_BLOCKED`.
+  - **Registration Validation**: Enforces full name, organization, passphrase complexity (≥ 8 chars), and password confirmation match.
+- **Automatic Redirection**: Upon clean verification, displays an approval card and automatically redirects the operator to `01 · Control Center`.
+- **1-Click Demo Operators**: Instant one-click authentication for `Alex Chen (L4 Officer)` and `Sarah Kim (L3 SecOps)`.
+
+### Hover-Expanding Sidebar
+- Collapses to `w-[72px]` for full-width workspace density.
+- Smoothly expands to `w-[280px]` on hover showing section labels and status indicators with **zero layout reflow**.
+- Grouped into three distinct operator zones:
+  - **Core Gateway**: `01 · Control Center`, `02 · Fraud Command`, `Email & URL Radar`
+  - **Testing & Compliance**: `03 · Attack Sandbox`, `04 · Policy Matrix`, `05 · Merkle Ledger`
+  - **Management & Clearance**: `Operator Profile`, `Gateway Settings`
+
+### Operator Clearance Profile
+- Displays security clearance banner (`L4 · ENCLAVE CRYPTO OFFICER`), TLS 1.3 tunnel status, and hardware key attestation.
+- Cryptographic session public keys with one-click copy and instant key rotation.
+- Role-Based Access Control (RBAC) permission grid and chronological security audit trail.
+
+### Enclave Gateway Settings
+- **Runtime Posture**: Fail-Closed vs Fail-Open switch, 20ms SLA latency ceiling, and reversible AES-256 vault toggle.
+- **Model Proxy Routing**: Upstream endpoint configuration, Anthropic Claude fallback provider, and daily token fuses.
+- **Incident Webhooks**: Real-time Slack and PagerDuty alert routing with severity filtering.
+- **Key Rotation**: Master gateway secret rotation with automated 60-minute sunset grace period.
 
 ---
 
 ## 🔌 1-Line Drop-In SDK Integration
 
-To secure existing Python, Node.js, or LangChain agents, developers only need to redirect the API base URL to TrustGate. **No model code rewrites are required.**
+To protect any Python, Node.js, or LangChain agent, point the client's `baseURL` to TrustGate. **Zero model code rewrites required.**
 
 ### Node.js (OpenAI SDK)
 
 ```javascript
 import OpenAI from 'openai';
 
-// Point OpenAI directly to TrustGate Enclave:
+// 1-Line change: Point client directly to TrustGate Enclave:
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
-  baseURL: 'http://localhost:5000/api/v1/gateway' // <-- 1-Line change!
+  baseURL: 'http://localhost:5000/api/v1/gateway'
 });
 
 async function runAgent() {
   const response = await openai.chat.completions.create({
     model: 'gpt-4o',
-    messages: [{ role: 'user', content: 'Process invoice for john@apple.com, SSN 000-12-3456' }]
+    messages: [{ role: 'user', content: 'Process customer record: john@apple.com, SSN 000-12-3456' }]
   });
 
   console.log(response.choices[0].message.content);
@@ -227,15 +272,15 @@ async function runAgent() {
 from openai import OpenAI
 import os
 
-# Point to TrustGate Enclave
+# 1-Line change: Point to TrustGate Enclave
 client = OpenAI(
     api_key=os.environ.get("OPENAI_API_KEY"),
-    base_url="http://localhost:5000/api/v1/gateway" # <-- 1-Line change!
+    base_url="http://localhost:5000/api/v1/gateway"
 )
 
 response = client.chat.completions.create(
     model="gpt-4o",
-    messages=[{"role": "user", "content": "Execute agent query..."}]
+    messages=[{"role": "user", "content": "Query production database..."}]
 )
 
 print(response.choices[0].message.content)
@@ -248,9 +293,9 @@ print(response.choices[0].message.content)
 ### Prerequisites
 - **Node.js**: v18.0.0 or higher
 - **npm**: v9.0.0 or higher
-- *(Optional)* Free **Supabase** account for real-time cloud audit logs
+- *(Optional)* **Supabase** account for real-time cloud telemetry
 
-### 1. Clone & Install
+### 1. Clone & Install Dependencies
 
 ```bash
 git clone https://github.com/Jathin-stack/TrustGate.git
@@ -260,22 +305,22 @@ npm install
 
 ### 2. Configure Environment
 
-Copy the example environment template:
+Copy the template:
 
 ```bash
 cp .env.example .env
 ```
 
-Edit `.env` with your preferred settings:
+Configure `.env`:
 
 ```env
 PORT=5000
 NODE_ENV=development
 
-# Security Secret
+# Master Gateway Secret Key
 GATEWAY_SECRET_KEY=9f8e7d6c5b4a39281706f5e4d3c2b1a0e9f8d7c6b5a4938271605f4e3d2c1b0a
 
-# Optional: Supabase Cloud Credentials for Realtime Ledger
+# Optional: Supabase Realtime Telemetry
 VITE_SUPABASE_URL=https://your-project-id.supabase.co
 VITE_SUPABASE_ANON_KEY=your_anon_key_here
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key_here
@@ -289,7 +334,7 @@ node src/server/index.js
 ```
 *(Runs on `http://localhost:5000`)*
 
-In a separate terminal, start the Vite frontend dashboard:
+In a separate terminal, start the Vite client application:
 ```bash
 npm run dev
 ```
@@ -305,22 +350,23 @@ npm run build
 
 ## 🧪 Automated Verification Test Suite
 
-TrustGate includes dedicated automated verification suites testing each layer of defense:
+TrustGate includes comprehensive automated test suites covering each layer of defense:
 
 ```bash
-# 1. Complete End-to-End Test (Guardrails, SLA latency, Observability)
+# 1. Universal Email & URL Instant Safety Engine (13 Scenarios)
+node test_quick_check.js
+
+# 2. Complete End-to-End Test (Guardrails, SLA latency, Observability)
 node test_e2e.js
 
-# 2. Fraud Subsystem Tests (Velocity, Synthetic Identity, Token Arbitrage, Phishing)
+# 3. Fraud Subsystem Tests (Velocity, Synthetic Identity, Token Arbitrage, Phishing)
 node test_fraud_subsystem.js
 
-# 3. Forensic Email & URL Radar Tests (Typosquatting, Headers, IP Obfuscation)
+# 4. Forensic Email & URL Radar Tests (Typosquatting, Headers, IP Obfuscation)
 node test_email_url_fraud.js
 
-# 4. Enterprise Capabilities Suite (Reversible PII, Merkle Proofs, SOC 2 / GDPR Reports)
+# 5. Enterprise Capabilities Suite (Reversible PII, Merkle Proofs, SOC 2 Reports)
 node test_showstoppers.js
-# 5. Universal Email & URL Instant Safety Checker (13 Test Cases)
-node test_quick_check.js
 ```
 
 **Benchmark Results:**
@@ -340,11 +386,11 @@ node test_quick_check.js
 
 | Method | Endpoint | Description |
 |---|---|---|
-| `POST` | `/api/v1/fraud/quick-check` | **Unified Safety Engine**: Inspects ANY email address, message, or URL and returns a definitive SAFE / UNSAFE verdict |
+| `POST` | `/api/v1/fraud/quick-check` | **Unified Safety Engine**: Inspects any email or URL and returns a definitive SAFE / UNSAFE verdict |
 | `POST` | `/api/v1/gateway/chat` | Main drop-in reverse proxy endpoint (OpenAI wire-compatible) |
-| `POST` | `/api/v1/gateway/inspect` | Raw inspection endpoint returning verdicts without upstream proxying |
-| `POST` | `/api/v1/fraud/email/analyze` | Forensic SPF/DKIM and body phishing threat analyzer |
-| `POST` | `/api/v1/fraud/url/analyze` | URL homograph, IP obfuscation, executable payload, and credential delimiter scanner |
+| `POST` | `/api/v1/gateway/inspect` | Raw inspection endpoint returning verdicts without upstream forwarding |
+| `POST` | `/api/v1/fraud/email/analyze` | Forensic SPF/DKIM and email phishing body threat analyzer |
+| `POST` | `/api/v1/fraud/url/analyze` | URL homograph, IP obfuscation, executable payload scanner |
 | `GET` | `/api/v1/fraud/stats` | Aggregated fraud radar KPIs and repelled attack counters |
 | `GET` | `/api/v1/fraud/radar` | Live real-time stream of intercepted fraud events |
 | `GET` | `/api/v1/policies` | Fetches active compliance matrix and rule configurations |
@@ -362,7 +408,7 @@ TrustGate/
 │   ├── client/                     # Vite + React 18 Frontend
 │   │   ├── styles/
 │   │   │   └── index.css           # Banani design tokens & keyframes
-│   │   ├── TrustGateApp.jsx        # Complete unified dashboard & control center
+│   │   ├── TrustGateApp.jsx        # Complete dashboard, auth gate, profile & settings
 │   │   ├── main.jsx                # Application root entry
 │   │   └── supabaseClient.js       # Supabase Realtime client configuration
 │   └── server/                     # Node.js Express Gateway Core
@@ -383,6 +429,7 @@ TrustGate/
 │       │       └── merkleTree.js        # Cryptographic audit hash engine
 │       └── index.js                # Server entry point
 ├── test_e2e.js                     # End-to-end integration test suite
+├── test_quick_check.js             # Universal email & URL safety test suite
 ├── test_fraud_subsystem.js         # Dedicated fraud radar test suite
 ├── test_email_url_fraud.js         # Forensic email & URL radar tests
 ├── test_showstoppers.js            # Enterprise compliance & Merkle proof tests
@@ -411,5 +458,3 @@ TrustGate/
 Distributed under the **MIT License**. See `LICENSE` for details.
 
 Developed with ❤️ for the next generation of safe, reliable autonomous AI agents.
-#   T r u s t G a t e  
- 
