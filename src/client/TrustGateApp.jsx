@@ -28,15 +28,74 @@ import {
   Fingerprint,
   Zap,
   Search,
-  Download
+  Download,
+  User,
+  Settings,
+  Key,
+  LogOut,
+  LogIn,
+  UserPlus,
+  ChevronRight,
+  Bell,
+  Database,
+  Cpu,
+  Save,
+  CheckCheck,
+  Building,
+  KeyRound
 } from 'lucide-react';
 
 export default function TrustGateApp() {
-  const [activeTab, setActiveTab] = useState('control'); // 'control' | 'fraud' | 'email_url' | 'sandbox' | 'policies' | 'ledger'
+  const [activeTab, setActiveTab] = useState('control'); // 'control' | 'fraud' | 'email_url' | 'sandbox' | 'policies' | 'ledger' | 'profile' | 'settings'
   const [isSdkModalOpen, setIsSdkModalOpen] = useState(false);
   const [copiedSdk, setCopiedSdk] = useState(false);
   const [selectedLog, setSelectedLog] = useState(null);
   const [supabaseConnected, setSupabaseConnected] = useState(false);
+  const [isSidebarHovered, setIsSidebarHovered] = useState(false);
+
+  // Operator Authentication State
+  const [currentUser, setCurrentUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem('trustgate_user');
+      return saved ? JSON.parse(saved) : {
+        name: 'Alex Chen',
+        email: 'alex.chen@trustgate.dev',
+        role: 'Lead SecOps Architect',
+        clearance: 'L4 · ENCLAVE CRYPTO OFFICER',
+        org: 'TrustGate Security Lab',
+        avatar: 'AC',
+        hardwareToken: 'YubiKey 5Ci (FIDO2 #8491)',
+        sessionPublicKey: '0x8f2a1b9c8d7e6f5a4b3c2d1e0f9a8b7c',
+        registeredAt: '2024-10-14'
+      };
+    } catch {
+      return {
+        name: 'Alex Chen',
+        email: 'alex.chen@trustgate.dev',
+        role: 'Lead SecOps Architect',
+        clearance: 'L4 · ENCLAVE CRYPTO OFFICER',
+        org: 'TrustGate Security Lab',
+        avatar: 'AC',
+        hardwareToken: 'YubiKey 5Ci (FIDO2 #8491)',
+        sessionPublicKey: '0x8f2a1b9c8d7e6f5a4b3c2d1e0f9a8b7c',
+        registeredAt: '2024-10-14'
+      };
+    }
+  });
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authMode, setAuthMode] = useState('login'); // 'login' | 'register'
+  const [authToast, setAuthToast] = useState(null);
+
+  const showToast = (msg, type = 'info') => {
+    setAuthToast({ msg, type });
+    setTimeout(() => setAuthToast(null), 3500);
+  };
+
+  const handleLogout = () => {
+    setCurrentUser(null);
+    localStorage.removeItem('trustgate_user');
+    showToast('Signed out of Enclave session. Operating in Guest mode.', 'info');
+  };
 
   // Live Simulated Telemetry Stream (backed by Supabase Realtime)
   const [logs, setLogs] = useState([
@@ -143,134 +202,298 @@ export default function TrustGateApp() {
 
   return (
     <div className="tg-vignette min-h-screen font-body text-cream selection:bg-ember/30 selection:text-ambersoft antialiased relative">
-      {/* ────────────────── TOP NAVIGATION BAR (BANANI THEME) ────────────────── */}
-      <header className="border-b border-line bg-background/85 backdrop-blur-md sticky top-0 z-40">
-        <div className="max-w-[1440px] mx-auto px-6 sm:px-8 h-[68px] flex items-center justify-between gap-6">
-          {/* Logo & Brand */}
-          <div className="flex items-center gap-3 shrink-0">
+      {/* ────────────────── EXPANDING HOVER SIDEBAR ────────────────── */}
+      <aside 
+        onMouseEnter={() => setIsSidebarHovered(true)}
+        onMouseLeave={() => setIsSidebarHovered(false)}
+        className={`fixed top-0 left-0 bottom-0 z-50 bg-[#141110] border-r border-line transition-all duration-300 ease-in-out flex flex-col justify-between overflow-y-auto overflow-x-hidden ${
+          isSidebarHovered ? 'w-[280px] shadow-2xl shadow-black/90' : 'w-[72px]'
+        }`}
+      >
+        {/* Sidebar Header / Logo */}
+        <div>
+          <div className="h-[68px] border-b border-line flex items-center px-4 gap-3 overflow-hidden shrink-0">
             <div 
+              onClick={() => setActiveTab('control')}
               className="w-10 h-10 rounded-md flex items-center justify-center shrink-0 cursor-pointer shadow-lg"
               style={{
                 background: 'linear-gradient(135deg, #F59E0B, #C2410C 60%, #E11D48)',
                 boxShadow: '0 0 24px rgba(245, 158, 11, 0.45)'
               }}
-              onClick={() => setActiveTab('control')}
             >
               <Shield className="w-5 h-5 text-white stroke-[2.4]" />
             </div>
-            <div>
+            
+            <div className={`transition-opacity duration-200 whitespace-nowrap ${isSidebarHovered ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
               <div className="flex items-center gap-2">
-                <span className="font-headings font-bold tracking-tight text-white text-base">TrustGate</span>
+                <span className="font-headings font-bold text-white text-base">TrustGate</span>
                 <span className="text-[10px] font-mono tracking-wider px-1.5 py-0.5 rounded bg-ember/15 text-ambersoft border border-ember/30 font-bold">
                   ENCLAVE
                 </span>
               </div>
+              <div className="text-[10px] font-mono text-muted-foreground tracking-widest mt-0.5">ZERO-TRUST CONTROL</div>
             </div>
           </div>
 
-          {/* Nav Tabs */}
-          <nav className="hidden lg:flex items-center gap-1 bg-panel/70 p-1 rounded-lg border border-line">
+          {/* Navigation Items Grouped */}
+          <div className="p-2 space-y-4">
             {[
-              { id: 'control', label: 'Control Center', icon: Activity },
-              { id: 'fraud', label: '02 · Fraud Command', icon: AlertTriangle },
-              { id: 'email_url', label: 'Email & URL Radar', icon: Globe },
-              { id: 'sandbox', label: '03 · Attack Sandbox', icon: Terminal },
-              { id: 'policies', label: '04 · Policy Matrix', icon: Sliders },
-              { id: 'ledger', label: '05 · Merkle Ledger', icon: Hash },
-            ].map((tab) => {
-              const Icon = tab.icon;
-              const isActive = activeTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-xs font-medium transition-all cursor-pointer ${
-                    isActive 
-                      ? 'bg-ember/20 text-ambersoft border border-ember/40 shadow-sm shadow-ember/10' 
-                      : 'text-muted-foreground hover:text-cream hover:bg-secondary/40'
-                  }`}
+              {
+                group: 'CORE GATEWAY',
+                items: [
+                  { id: 'control', label: '01 · Control Center', icon: Activity, badge: 'Live' },
+                  { id: 'fraud', label: '02 · Fraud Command', icon: AlertTriangle, badge: '4 Shields' },
+                  { id: 'email_url', label: 'Email & URL Radar', icon: Globe, badge: 'Heuristic' },
+                ]
+              },
+              {
+                group: 'TESTING & COMPLIANCE',
+                items: [
+                  { id: 'sandbox', label: '03 · Attack Sandbox', icon: Terminal, badge: 'OWASP' },
+                  { id: 'policies', label: '04 · Policy Matrix', icon: Sliders, badge: 'Profiles' },
+                  { id: 'ledger', label: '05 · Merkle Ledger', icon: Hash, badge: 'SHA-256' },
+                ]
+              },
+              {
+                group: 'MANAGEMENT & CLEARANCE',
+                items: [
+                  { id: 'profile', label: 'Operator Profile', icon: User, badge: currentUser ? 'L4' : 'Guest' },
+                  { id: 'settings', label: 'Gateway Settings', icon: Settings, badge: 'Config' },
+                ]
+              }
+            ].map((section, sIdx) => (
+              <div key={sIdx} className="space-y-1">
+                {isSidebarHovered && (
+                  <div className="px-3 py-1 font-mono text-[9px] tracking-wider text-muted-foreground uppercase">
+                    {section.group}
+                  </div>
+                )}
+                {!isSidebarHovered && sIdx > 0 && (
+                  <div className="w-8 mx-auto my-2 border-t border-line/60" />
+                )}
+
+                {section.items.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = activeTab === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => setActiveTab(item.id)}
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-medium transition-all cursor-pointer overflow-hidden ${
+                        isActive 
+                          ? 'bg-ember/20 text-ambersoft border border-ember/40 shadow-sm shadow-ember/10 font-semibold' 
+                          : 'text-muted-foreground hover:text-cream hover:bg-secondary/50 border border-transparent'
+                      }`}
+                      title={!isSidebarHovered ? item.label : undefined}
+                    >
+                      <div className="w-5 flex justify-center shrink-0">
+                        <Icon className={`w-4 h-4 ${isActive ? 'text-ambersoft' : 'text-muted-foreground'}`} />
+                      </div>
+                      
+                      {isSidebarHovered && (
+                        <div className="flex-1 flex items-center justify-between min-w-0 transition-opacity duration-200">
+                          <span className="truncate">{item.label}</span>
+                          <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded ml-2 shrink-0 ${
+                            isActive 
+                              ? 'bg-ember/30 text-ambersoft border border-ember/40' 
+                              : 'bg-black/40 text-muted-foreground border border-line'
+                          }`}>
+                            {item.badge}
+                          </span>
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Sidebar Footer / User Profile Card */}
+        <div className="p-2 border-t border-line bg-black/40">
+          {currentUser ? (
+            <div className={`p-2 rounded-lg bg-panel/80 border border-line transition-all ${isSidebarHovered ? 'space-y-2' : 'flex flex-col items-center'}`}>
+              <div className="flex items-center gap-2.5 overflow-hidden">
+                <div 
+                  onClick={() => setActiveTab('profile')}
+                  className="w-8 h-8 rounded-full bg-ember/20 border border-ember/40 text-ambersoft flex items-center justify-center font-bold text-xs shrink-0 cursor-pointer relative"
+                  title="View Operator Profile"
                 >
-                  <Icon className="w-3.5 h-3.5" />
-                  {tab.label}
-                </button>
-              );
-            })}
-          </nav>
+                  {currentUser.avatar || 'AC'}
+                  <span className="w-2 h-2 rounded-full bg-verdant absolute -bottom-0.5 -right-0.5 border border-black" />
+                </div>
+                
+                {isSidebarHovered && (
+                  <div className="min-w-0 flex-1 cursor-pointer" onClick={() => setActiveTab('profile')}>
+                    <div className="text-xs font-semibold text-cream truncate">{currentUser.name}</div>
+                    <div className="text-[10px] text-muted-foreground font-mono truncate">{currentUser.role}</div>
+                  </div>
+                )}
+              </div>
 
-          {/* Quick SLA & 1-Line SDK Action */}
-          <div className="flex items-center gap-3 shrink-0">
-            <div className="flex items-center gap-2 px-3 py-1 rounded-full border border-line bg-panel/70 font-mono text-xs text-mint">
-              <span className="w-1.5 h-1.5 rounded-full bg-verdant tg-blink" style={{ boxShadow: '0 0 8px #10B981' }} />
-              <span>0.24ms SLA</span>
+              {isSidebarHovered && (
+                <div className="pt-2 border-t border-line/60 flex items-center justify-between text-[11px] font-mono">
+                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-verdant/15 text-mint border border-verdant/30">
+                    {currentUser.clearance.split('·')[0]}
+                  </span>
+                  <div className="flex items-center gap-1">
+                    <button 
+                      onClick={() => setActiveTab('settings')}
+                      className="p-1 rounded hover:bg-secondary text-muted-foreground hover:text-cream cursor-pointer"
+                      title="Settings"
+                    >
+                      <Settings className="w-3.5 h-3.5" />
+                    </button>
+                    <button 
+                      onClick={handleLogout}
+                      className="p-1 rounded hover:bg-crimson/20 text-muted-foreground hover:text-rose cursor-pointer"
+                      title="Sign Out"
+                    >
+                      <LogOut className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
-            <button
-              onClick={() => setIsSdkModalOpen(true)}
-              style={{
-                background: 'linear-gradient(135deg, #F59E0B, #D97706)',
-                boxShadow: '0 0 20px rgba(245, 158, 11, 0.35)'
+          ) : (
+            <div className="flex flex-col items-center gap-2">
+              <button
+                onClick={() => {
+                  setAuthMode('login');
+                  setIsAuthModalOpen(true);
+                }}
+                className={`w-full py-2 rounded-md bg-ember/15 text-ambersoft border border-ember/30 hover:bg-ember/25 transition-all text-xs font-semibold flex items-center justify-center gap-2 cursor-pointer ${
+                  !isSidebarHovered ? 'px-0' : 'px-3'
+                }`}
+                title="Sign In to Enclave"
+              >
+                <LogIn className="w-4 h-4 shrink-0" />
+                {isSidebarHovered && <span>Sign In</span>}
+              </button>
+            </div>
+          )}
+        </div>
+      </aside>
+
+      {/* ────────────────── MAIN CONTENT AREA (OFFSET FOR HOVER SIDEBAR) ────────────────── */}
+      <div className="pl-[72px] min-h-screen flex flex-col transition-all">
+        {/* Top Status Header */}
+        <header className="border-b border-line bg-background/85 backdrop-blur-md sticky top-0 z-40">
+          <div className="max-w-[1440px] mx-auto px-6 sm:px-8 h-[68px] flex items-center justify-between gap-6">
+            {/* Breadcrumb & Section Name */}
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 text-xs font-mono text-muted-foreground">
+                <span className="text-cream">TrustGate Enclave</span>
+                <span>/</span>
+                <span className="text-ambersoft font-bold uppercase">
+                  {activeTab === 'control' && '01 · Control Center'}
+                  {activeTab === 'fraud' && '02 · Fraud Command'}
+                  {activeTab === 'email_url' && 'Email & URL Fraud Radar'}
+                  {activeTab === 'sandbox' && '03 · Attack Sandbox'}
+                  {activeTab === 'policies' && '04 · Policy Matrix'}
+                  {activeTab === 'ledger' && '05 · Merkle Audit Ledger'}
+                  {activeTab === 'profile' && 'Operator Clearance & Profile'}
+                  {activeTab === 'settings' && 'Enclave Gateway Settings'}
+                </span>
+              </div>
+            </div>
+
+            {/* Quick SLA, Live Mesh, and Actions */}
+            <div className="flex items-center gap-3">
+              <div className="hidden md:flex items-center gap-2 px-3 py-1 rounded-full border border-line bg-panel/70 font-mono text-xs text-mint">
+                <span className="w-1.5 h-1.5 rounded-full bg-verdant tg-blink" style={{ boxShadow: '0 0 8px #10B981' }} />
+                <span>Gateway: Operational · 0.24ms</span>
+              </div>
+
+              <div className="hidden lg:flex items-center gap-2 px-3 py-1 rounded-full border border-line bg-panel/70 font-mono text-xs text-ambersoft">
+                <span className="w-1.5 h-1.5 rounded-full bg-ember tg-blink" />
+                <span>12,408 AGENTS PROXIED</span>
+              </div>
+
+              <button
+                onClick={() => setIsSdkModalOpen(true)}
+                style={{
+                  background: 'linear-gradient(135deg, #F59E0B, #D97706)',
+                  boxShadow: '0 0 20px rgba(245, 158, 11, 0.35)'
+                }}
+                className="px-3.5 py-1.5 rounded-md text-xs font-bold text-primary-foreground hover:opacity-95 transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                1-Line SDK
+              </button>
+
+              {currentUser ? (
+                <button
+                  onClick={() => setActiveTab('profile')}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-line bg-panel hover:bg-secondary/60 text-xs font-medium cursor-pointer transition-colors"
+                >
+                  <div className="w-6 h-6 rounded-full bg-ember/20 text-ambersoft font-bold flex items-center justify-center text-[10px]">
+                    {currentUser.avatar || 'AC'}
+                  </div>
+                  <span className="text-cream hidden sm:inline">{currentUser.name}</span>
+                </button>
+              ) : (
+                <button
+                  onClick={() => {
+                    setAuthMode('login');
+                    setIsAuthModalOpen(true);
+                  }}
+                  className="px-3 py-1.5 rounded-md text-xs font-semibold bg-ember/20 text-ambersoft border border-ember/40 hover:bg-ember/30 transition-all flex items-center gap-1.5 cursor-pointer"
+                >
+                  <LogIn className="w-3.5 h-3.5" />
+                  Sign In / Register
+                </button>
+              )}
+            </div>
+          </div>
+        </header>
+
+        {/* Main Application Router */}
+        <main className="max-w-[1440px] w-full mx-auto px-4 sm:px-8 py-8 relative flex-1">
+          {activeTab === 'control' && (
+            <ControlCenterView 
+              onOpenLog={(log) => setSelectedLog(log)} 
+              logs={logs} 
+              onSwitchTab={setActiveTab} 
+              supabaseConnected={supabaseConnected} 
+            />
+          )}
+          {activeTab === 'fraud' && <FraudCommandView />}
+          {activeTab === 'email_url' && <EmailUrlFraudCenterView />}
+          {activeTab === 'sandbox' && <AttackSandboxView />}
+          {activeTab === 'policies' && <PoliciesView />}
+          {activeTab === 'ledger' && <AuditLedgerView />}
+          {activeTab === 'profile' && (
+            <ProfileView 
+              user={currentUser} 
+              onSwitchAuth={() => {
+                setAuthMode('login');
+                setIsAuthModalOpen(true);
               }}
-              className="px-3.5 py-1.5 rounded-md text-xs font-bold text-primary-foreground hover:opacity-95 transition-all flex items-center gap-1.5 cursor-pointer"
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              1-Line SDK
-            </button>
-          </div>
-        </div>
+              onLogout={handleLogout}
+              onUpdateUser={setCurrentUser}
+              showToast={showToast}
+            />
+          )}
+          {activeTab === 'settings' && <SettingsView showToast={showToast} />}
 
-        {/* Mobile Navigation Drawer */}
-        <div className="flex lg:hidden overflow-x-auto px-4 py-2 border-t border-line gap-1 bg-panel/90">
-          {[
-            { id: 'control', label: 'Control' },
-            { id: 'fraud', label: 'Fraud' },
-            { id: 'email_url', label: 'Email/URL' },
-            { id: 'sandbox', label: 'Sandbox' },
-            { id: 'policies', label: 'Policies' },
-            { id: 'ledger', label: 'Ledger' },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`px-3 py-1 rounded-md text-xs font-medium whitespace-nowrap cursor-pointer ${
-                activeTab === tab.id ? 'bg-ember/20 text-ambersoft border border-ember/40' : 'text-muted-foreground'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-      </header>
-
-      {/* ────────────────── MAIN APPLICATION ROUTER ────────────────── */}
-      <main className="max-w-[1440px] mx-auto px-4 sm:px-8 py-8 relative">
-        {activeTab === 'control' && (
-          <ControlCenterView 
-            onOpenLog={(log) => setSelectedLog(log)} 
-            logs={logs} 
-            onSwitchTab={setActiveTab} 
-            supabaseConnected={supabaseConnected} 
-          />
-        )}
-        {activeTab === 'fraud' && <FraudCommandView />}
-        {activeTab === 'email_url' && <EmailUrlFraudCenterView />}
-        {activeTab === 'sandbox' && <AttackSandboxView />}
-        {activeTab === 'policies' && <PoliciesView />}
-        {activeTab === 'ledger' && <AuditLedgerView />}
-
-        {/* ── BANANI BOTTOM FOOTER ── */}
-        <footer className="mt-12 rounded-lg border border-line bg-panel/60 px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="font-mono text-xs text-muted-foreground">
-            © TrustGate Enclave · SOC2 · HIPAA · PCI-DSS ready
-          </div>
-          <div className="flex items-center gap-6 font-mono text-xs text-muted-foreground">
-            <span className="hover:text-cream cursor-pointer">Docs</span>
-            <span className="hover:text-cream cursor-pointer">Status</span>
-            <span className="text-mint flex items-center gap-1.5 font-medium">
-              <span className="w-1.5 h-1.5 rounded-full bg-verdant tg-blink" />
-              All systems nominal
-            </span>
-          </div>
-        </footer>
-      </main>
+          {/* Banani Bottom Footer */}
+          <footer className="mt-12 rounded-lg border border-line bg-panel/60 px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="font-mono text-xs text-muted-foreground">
+              © TrustGate Enclave · SOC2 · HIPAA · PCI-DSS ready
+            </div>
+            <div className="flex items-center gap-6 font-mono text-xs text-muted-foreground">
+              <span className="hover:text-cream cursor-pointer">Docs</span>
+              <span className="hover:text-cream cursor-pointer">Status</span>
+              <span className="text-mint flex items-center gap-1.5 font-medium">
+                <span className="w-1.5 h-1.5 rounded-full bg-verdant tg-blink" />
+                All systems nominal
+              </span>
+            </div>
+          </footer>
+        </main>
+      </div>
 
       {/* ────────────────── MODAL: 1-LINE SDK QUICK INTEGRATION ────────────────── */}
       {isSdkModalOpen && (
@@ -384,6 +607,35 @@ export default function TrustGateApp() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* ────────────────── MODAL: OPERATOR AUTHENTICATION (LOGIN & REGISTER) ────────────────── */}
+      {isAuthModalOpen && (
+        <AuthModal 
+          isOpen={isAuthModalOpen}
+          onClose={() => setIsAuthModalOpen(false)}
+          mode={authMode}
+          setMode={setAuthMode}
+          onLoginSuccess={(user) => {
+            setCurrentUser(user);
+            localStorage.setItem('trustgate_user', JSON.stringify(user));
+            setIsAuthModalOpen(false);
+            showToast(`Operator session established for ${user.name} (${user.clearance.split('·')[0]})`, 'success');
+          }}
+          showToast={showToast}
+        />
+      )}
+
+      {/* Floating Auth Toast Notification */}
+      {authToast && (
+        <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 rounded-lg border shadow-2xl backdrop-blur-md text-xs font-mono animate-fadeIn ${
+          authToast.type === 'success' 
+            ? 'bg-verdant/15 border-verdant/40 text-mint' 
+            : 'bg-panel border-line text-cream'
+        }`}>
+          <CheckCircle2 className="w-4 h-4 text-mint shrink-0" />
+          <span>{authToast.msg}</span>
         </div>
       )}
     </div>
@@ -1761,6 +2013,687 @@ function PlaceholderCard({ title, desc }) {
       <p className="text-muted-foreground text-xs mt-1 max-w-xs leading-relaxed">{desc}</p>
       <div className="mt-4 px-3 py-1 rounded-full bg-secondary border border-line text-[10px] font-mono text-muted-foreground">
         Sub-millisecond verification pipeline
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// VIEW 7: OPERATOR CLEARANCE & PROFILE (BANANI THEME)
+// ─────────────────────────────────────────────────────────────────────────────
+function ProfileView({ user, onSwitchAuth, onLogout, onUpdateUser, showToast }) {
+  const [copiedKey, setCopiedKey] = useState(false);
+  const [isRotating, setIsRotating] = useState(false);
+
+  const currentUser = user || {
+    name: 'Guest Operator',
+    email: 'guest@trustgate.dev',
+    role: 'Unauthenticated Viewer',
+    clearance: 'L0 · RESTRICTED GUEST',
+    org: 'Public Network',
+    avatar: 'GO',
+    hardwareToken: 'None',
+    sessionPublicKey: '0x00000000000000000000000000000000'
+  };
+
+  const handleCopyKey = () => {
+    navigator.clipboard?.writeText(currentUser.sessionPublicKey);
+    setCopiedKey(true);
+    setTimeout(() => setCopiedKey(false), 2000);
+  };
+
+  const handleRotateKeys = () => {
+    setIsRotating(true);
+    setTimeout(() => {
+      setIsRotating(false);
+      const newKey = '0x' + Array.from({length: 32}, () => Math.floor(Math.random()*16).toString(16)).join('');
+      if (onUpdateUser && user) {
+        onUpdateUser({ ...user, sessionPublicKey: newKey });
+      }
+      showToast?.('Enclave hardware session key rotated and cryptographically resigned.', 'success');
+    }, 700);
+  };
+
+  return (
+    <div className="space-y-8 animate-fadeIn max-w-5xl mx-auto">
+      {/* Profile Header Card */}
+      <div className="rounded-xl border border-line bg-panel/75 p-6 sm:p-8 relative overflow-hidden backdrop-blur-xl shadow-2xl">
+        <div className="absolute top-0 right-0 w-80 h-80 bg-ember/5 rounded-full blur-3xl pointer-events-none" />
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 relative z-10">
+          <div className="flex items-center gap-5">
+            <div className="relative">
+              <div 
+                className="w-20 h-20 rounded-2xl flex items-center justify-center font-bold text-2xl text-cream shadow-2xl border-2 border-ember/50"
+                style={{ background: 'linear-gradient(135deg, #F59E0B, #C2410C 60%, #E11D48)' }}
+              >
+                {currentUser.avatar || 'OP'}
+              </div>
+              <span className="w-4 h-4 rounded-full bg-verdant absolute -bottom-1 -right-1 border-2 border-panel shadow-sm shadow-verdant/80 tg-blink" />
+            </div>
+
+            <div>
+              <div className="flex flex-wrap items-center gap-2.5">
+                <h2 className="text-xl sm:text-2xl font-bold font-headings text-cream tracking-tight">{currentUser.name}</h2>
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-ember/15 text-ambersoft border border-ember/40 shadow-sm shadow-ember/10">
+                  {currentUser.clearance}
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground font-mono mt-1">{currentUser.email} · {currentUser.org}</p>
+              
+              <div className="flex flex-wrap items-center gap-3 mt-3 text-[11px] font-mono text-muted-foreground">
+                <span className="flex items-center gap-1.5 text-mint">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  Hardware Key FIDO2 Active
+                </span>
+                <span>•</span>
+                <span>TLS 1.3 Wire-Speed Tunnel</span>
+                <span>•</span>
+                <span>IP Binding: 192.168.1.104</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 self-stretch sm:self-auto justify-end">
+            <button
+              onClick={onSwitchAuth}
+              className="px-3.5 py-2 rounded-md bg-secondary hover:bg-line text-cream border border-line text-xs font-medium cursor-pointer transition-colors"
+            >
+              Switch Account
+            </button>
+            <button
+              onClick={onLogout}
+              className="px-3.5 py-2 rounded-md bg-crimson/15 hover:bg-crimson/25 text-rose border border-coral/30 text-xs font-semibold cursor-pointer transition-colors flex items-center gap-1.5"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              Sign Out
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* 3 Operator Decision KPIs */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="rounded-lg border border-line bg-panel/70 p-5 shadow-xl">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-mono text-muted-foreground">SUPERVISED TRANSACTIONS</span>
+            <Activity className="w-4 h-4 text-ambersoft" />
+          </div>
+          <div className="font-headings font-bold text-cream text-2xl mt-2">12,408</div>
+          <div className="text-[11px] text-mint font-mono mt-1">100% Policy SLA compliance</div>
+        </div>
+
+        <div className="rounded-lg border border-line bg-panel/70 p-5 shadow-xl">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-mono text-muted-foreground">ANOMALY INTERCEPTIONS</span>
+            <AlertTriangle className="w-4 h-4 text-coral" />
+          </div>
+          <div className="font-headings font-bold text-cream text-2xl mt-2">621</div>
+          <div className="text-[11px] text-rose font-mono mt-1">37 blocked today</div>
+        </div>
+
+        <div className="rounded-lg border border-line bg-panel/70 p-5 shadow-xl">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-mono text-muted-foreground">MERKLE ANCHOR INTEGRITY</span>
+            <Hash className="w-4 h-4 text-mint" />
+          </div>
+          <div className="font-headings font-bold text-cream text-2xl mt-2">100% VALID</div>
+          <div className="text-[11px] text-muted-foreground font-mono mt-1">Zero cryptographic drift</div>
+        </div>
+      </div>
+
+      {/* Hardware Keys & Enclave Cryptographic Session */}
+      <div className="rounded-xl border border-line bg-panel/70 p-6 shadow-xl space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="font-headings font-bold text-cream text-base flex items-center gap-2">
+              <Key className="w-4 h-4 text-ambersoft" />
+              Enclave Session Public Key & Hardware Security Token
+            </h3>
+            <p className="text-xs text-muted-foreground mt-0.5">Cryptographic operator identity used to sign transactions and commit Merkle audit blocks.</p>
+          </div>
+          <button
+            onClick={handleRotateKeys}
+            disabled={isRotating}
+            className="px-3 py-1.5 rounded-md bg-secondary hover:bg-line text-xs font-mono text-cream border border-line flex items-center gap-1.5 cursor-pointer"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isRotating ? 'animate-spin' : ''}`} />
+            {isRotating ? 'Rotating...' : 'Rotate Session Key'}
+          </button>
+        </div>
+
+        <div className="bg-black/60 rounded-lg p-3.5 border border-line font-mono text-xs flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <span className="text-[10px] text-muted-foreground block">OPERATOR PUBLIC KEY</span>
+            <span className="text-ambersoft font-bold truncate block">{currentUser.sessionPublicKey}</span>
+          </div>
+          <button
+            onClick={handleCopyKey}
+            className="px-2.5 py-1 rounded bg-secondary hover:bg-line text-cream text-[11px] flex items-center gap-1 cursor-pointer shrink-0"
+          >
+            {copiedKey ? <Check className="w-3.5 h-3.5 text-mint" /> : <Copy className="w-3.5 h-3.5" />}
+            {copiedKey ? 'Copied' : 'Copy'}
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+          <div className="p-3 rounded-lg border border-line bg-black/40 flex items-center justify-between">
+            <div>
+              <span className="text-[10px] text-muted-foreground font-mono block">FIDO2 HARDWARE TOKEN</span>
+              <span className="text-xs font-semibold text-cream font-mono">{currentUser.hardwareToken || 'YubiKey 5Ci'}</span>
+            </div>
+            <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-verdant/15 text-mint border border-verdant/30 font-bold">VERIFIED</span>
+          </div>
+
+          <div className="p-3 rounded-lg border border-line bg-black/40 flex items-center justify-between">
+            <div>
+              <span className="text-[10px] text-muted-foreground font-mono block">RBAC ROLE CLEARANCE</span>
+              <span className="text-xs font-semibold text-cream font-mono">Enclave Master Operator</span>
+            </div>
+            <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-ember/15 text-ambersoft border border-ember/30 font-bold">TIER 4</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Operator Decision Audit Ledger (Activity Trail) */}
+      <div className="rounded-xl border border-line bg-panel/70 p-6 shadow-xl space-y-4">
+        <div>
+          <h3 className="font-headings font-bold text-cream text-base flex items-center gap-2">
+            <ShieldCheck className="w-4 h-4 text-mint" />
+            Operator Decision Audit Trail
+          </h3>
+          <p className="text-xs text-muted-foreground mt-0.5">Immutable record of governance changes and override decisions committed by this operator.</p>
+        </div>
+
+        <div className="divide-y divide-line/60 font-mono text-xs">
+          {[
+            { time: '14:02:11', event: 'Cryptographic Merkle Chain Re-Verification #48,290', status: 'PASSED', tag: 'CHAIN-AUDIT' },
+            { time: '13:48:20', event: 'Applied PCI-DSS FinTech Compliance Profile Matrix', status: 'ENFORCED', tag: 'POLICY-UPDATE' },
+            { time: '13:15:05', event: 'Quarantined Salami Attack Burst (VEL-04) 43× $9.80 Charges', status: 'BLOCKED', tag: 'VELOCITY-FRAUD' },
+            { time: '12:30:18', event: 'Rotated Gateway Master Proxy Key & Invalidated Revocation List', status: 'SUCCESS', tag: 'SECURITY-REKEY' },
+            { time: '11:45:00', event: 'Operator Session Established via Hardware Token FIDO2 YubiKey', status: 'AUTHENTICATED', tag: 'AUTH-LOGIN' },
+          ].map((act, idx) => (
+            <div key={idx} className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div className="flex items-center gap-3">
+                <span className="text-muted-foreground text-[11px]">{act.time}</span>
+                <span className="text-cream">{act.event}</span>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <span className="text-[10px] text-muted-foreground">{act.tag}</span>
+                <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                  act.status === 'BLOCKED' ? 'bg-crimson/20 text-rose border border-coral/30' :
+                  act.status === 'PASSED' || act.status === 'AUTHENTICATED' || act.status === 'SUCCESS' ? 'bg-verdant/20 text-mint border border-verdant/30' :
+                  'bg-ember/20 text-ambersoft border border-ember/30'
+                }`}>
+                  {act.status}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// VIEW 8: ENCLAVE GATEWAY SETTINGS (BANANI THEME)
+// ─────────────────────────────────────────────────────────────────────────────
+function SettingsView({ showToast }) {
+  const [settings, setSettings] = useState({
+    enforcementMode: 'fail_closed',
+    slaTimeoutMs: 20,
+    aesVaultEncryption: true,
+    sessionTtlMinutes: 15,
+    upstreamBaseUrl: 'https://api.openai.com/v1',
+    fallbackProvider: 'anthropic_claude',
+    dailyTokenBudget: 2000000,
+    spongeDepthCap: 128,
+    slackWebhook: 'https://hooks.slack.com/services/T0000/B0000/XXXXX',
+    pagerDutyKey: 'pd_secops_live_token_77a9',
+    alertSeverity: 'critical',
+    clientRateLimit: 100,
+    gatewaySecretKey: 'tg_live_9f8e7d6c5b4a39281706f5e4d3c2b1a0e9f8d7c6b5a49382'
+  });
+
+  const [copiedSecret, setCopiedSecret] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+
+  const handleCopySecret = () => {
+    navigator.clipboard?.writeText(settings.gatewaySecretKey);
+    setCopiedSecret(true);
+    setTimeout(() => setCopiedSecret(false), 2000);
+  };
+
+  const handleRotateSecret = () => {
+    const newKey = 'tg_live_' + Array.from({length: 48}, () => Math.floor(Math.random()*16).toString(16)).join('');
+    setSettings(prev => ({ ...prev, gatewaySecretKey: newKey }));
+    showToast?.('Gateway secret key rotated. Previous key will expire in 60 minutes.', 'info');
+  };
+
+  const handleSave = (e) => {
+    e.preventDefault();
+    setIsSaved(true);
+    showToast?.('Enclave settings successfully synchronized and committed to memory!', 'success');
+    setTimeout(() => setIsSaved(false), 2500);
+  };
+
+  return (
+    <div className="space-y-8 animate-fadeIn max-w-4xl mx-auto">
+      <div>
+        <div className="font-mono text-xs tracking-widest text-ember">07 · ENCLAVE GATEWAY SETTINGS</div>
+        <h2 className="font-headings font-bold text-cream text-2xl tracking-tight mt-1">Runtime policies, model routing & webhooks</h2>
+        <p className="text-muted-foreground text-xs mt-0.5">Control gateway failover postures, upstream API endpoints, and critical alert dispatch.</p>
+      </div>
+
+      <form onSubmit={handleSave} className="space-y-6">
+        {/* Section 1: Gateway Runtime Posture */}
+        <div className="rounded-xl border border-line bg-panel/70 p-6 shadow-xl space-y-4">
+          <div className="flex items-center gap-2 border-b border-line pb-3">
+            <Sliders className="w-4 h-4 text-ambersoft" />
+            <h3 className="font-headings font-bold text-cream text-sm">1. Gateway Enforcement Posture & SLA</h3>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-mono text-muted-foreground mb-1.5">FAILOVER POSTURE</label>
+              <select
+                value={settings.enforcementMode}
+                onChange={(e) => setSettings({ ...settings, enforcementMode: e.target.value })}
+                className="w-full bg-black/70 border border-line rounded-lg px-3 py-2 text-xs text-cream outline-none focus:border-ember"
+              >
+                <option value="fail_closed">Fail-Closed (Strict Zero-Trust · Recommended)</option>
+                <option value="fail_open">Fail-Open (Permissive Log-Only · High Availability)</option>
+              </select>
+              <span className="text-[10px] text-muted-foreground block mt-1">If inspection exceeds SLA, query is blocked.</span>
+            </div>
+
+            <div>
+              <label className="block text-xs font-mono text-muted-foreground mb-1.5">SLA TIMEOUT HARD CAP (MS)</label>
+              <input
+                type="number"
+                value={settings.slaTimeoutMs}
+                onChange={(e) => setSettings({ ...settings, slaTimeoutMs: Number(e.target.value) })}
+                className="w-full bg-black/70 border border-line rounded-lg px-3 py-2 text-xs text-cream outline-none focus:border-ember font-mono"
+              />
+              <span className="text-[10px] text-muted-foreground block mt-1">Sub-millisecond default: 20ms ceiling.</span>
+            </div>
+          </div>
+
+          <div className="pt-2 flex items-center justify-between border-t border-line/60">
+            <div>
+              <div className="text-xs font-semibold text-cream">Two-Way Reversible PII Storage Encryption</div>
+              <div className="text-[11px] text-muted-foreground">AES-256-GCM hardware vault encryption for temporary redacted entities.</div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setSettings({ ...settings, aesVaultEncryption: !settings.aesVaultEncryption })}
+              className={`w-11 h-6 rounded-full transition-colors relative p-0.5 cursor-pointer ${
+                settings.aesVaultEncryption ? 'bg-ember' : 'bg-secondary'
+              }`}
+            >
+              <div className={`w-5 h-5 rounded-full bg-white transition-transform ${
+                settings.aesVaultEncryption ? 'translate-x-5' : 'translate-x-0'
+              }`} />
+            </button>
+          </div>
+        </div>
+
+        {/* Section 2: Model Routing & Upstream Proxy */}
+        <div className="rounded-xl border border-line bg-panel/70 p-6 shadow-xl space-y-4">
+          <div className="flex items-center gap-2 border-b border-line pb-3">
+            <Cpu className="w-4 h-4 text-ambersoft" />
+            <h3 className="font-headings font-bold text-cream text-sm">2. Model Proxy Routing & Token Budget Fuses</h3>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-mono text-muted-foreground mb-1.5">UPSTREAM BASE URL</label>
+              <input
+                type="text"
+                value={settings.upstreamBaseUrl}
+                onChange={(e) => setSettings({ ...settings, upstreamBaseUrl: e.target.value })}
+                className="w-full bg-black/70 border border-line rounded-lg px-3 py-2 text-xs text-cream outline-none focus:border-ember font-mono"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-mono text-muted-foreground mb-1.5">FALLBACK MODEL PROVIDER</label>
+              <select
+                value={settings.fallbackProvider}
+                onChange={(e) => setSettings({ ...settings, fallbackProvider: e.target.value })}
+                className="w-full bg-black/70 border border-line rounded-lg px-3 py-2 text-xs text-cream outline-none focus:border-ember"
+              >
+                <option value="anthropic_claude">Anthropic Claude 3.5 Sonnet</option>
+                <option value="gemini_flash">Google Gemini 2.5 Flash</option>
+                <option value="local_llama">Local Ollama / vLLM Instance</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-mono text-muted-foreground mb-1.5">DAILY AGENT TOKEN QUOTA</label>
+              <input
+                type="number"
+                value={settings.dailyTokenBudget}
+                onChange={(e) => setSettings({ ...settings, dailyTokenBudget: Number(e.target.value) })}
+                className="w-full bg-black/70 border border-line rounded-lg px-3 py-2 text-xs text-cream outline-none focus:border-ember font-mono"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-mono text-muted-foreground mb-1.5">SPONGE RECURSION DEPTH CAP</label>
+              <input
+                type="number"
+                value={settings.spongeDepthCap}
+                onChange={(e) => setSettings({ ...settings, spongeDepthCap: Number(e.target.value) })}
+                className="w-full bg-black/70 border border-line rounded-lg px-3 py-2 text-xs text-cream outline-none focus:border-ember font-mono"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Section 3: Webhooks & Incident Alerting */}
+        <div className="rounded-xl border border-line bg-panel/70 p-6 shadow-xl space-y-4">
+          <div className="flex items-center gap-2 border-b border-line pb-3">
+            <Bell className="w-4 h-4 text-ambersoft" />
+            <h3 className="font-headings font-bold text-cream text-sm">3. Incident Webhooks & SecOps Dispatch</h3>
+          </div>
+
+          <div className="space-y-3 font-mono text-xs">
+            <div>
+              <label className="block text-muted-foreground mb-1">SLACK NOTIFICATION WEBHOOK</label>
+              <input
+                type="text"
+                value={settings.slackWebhook}
+                onChange={(e) => setSettings({ ...settings, slackWebhook: e.target.value })}
+                className="w-full bg-black/70 border border-line rounded-lg px-3 py-2 text-cream outline-none focus:border-ember"
+              />
+            </div>
+
+            <div>
+              <label className="block text-muted-foreground mb-1">PAGERDUTY SERVICE INTEGRATION KEY</label>
+              <input
+                type="text"
+                value={settings.pagerDutyKey}
+                onChange={(e) => setSettings({ ...settings, pagerDutyKey: e.target.value })}
+                className="w-full bg-black/70 border border-line rounded-lg px-3 py-2 text-cream outline-none focus:border-ember"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Section 4: Gateway Secret Key */}
+        <div className="rounded-xl border border-line bg-panel/70 p-6 shadow-xl space-y-4">
+          <div className="flex items-center gap-2 border-b border-line pb-3">
+            <Key className="w-4 h-4 text-ambersoft" />
+            <h3 className="font-headings font-bold text-cream text-sm">4. Gateway Master Secret Key & Rate Limits</h3>
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-xs font-mono text-muted-foreground">GATEWAY SECRET KEY</span>
+              <button
+                type="button"
+                onClick={handleRotateSecret}
+                className="text-[11px] font-mono text-ambersoft hover:underline cursor-pointer"
+              >
+                Rotate Key
+              </button>
+            </div>
+            <div className="bg-black/70 rounded-lg p-3 border border-line font-mono text-xs text-cream flex items-center justify-between gap-2">
+              <span className="truncate">{settings.gatewaySecretKey}</span>
+              <button
+                type="button"
+                onClick={handleCopySecret}
+                className="p-1.5 rounded bg-secondary hover:bg-line text-cream cursor-pointer shrink-0"
+              >
+                {copiedSecret ? <Check className="w-3.5 h-3.5 text-mint" /> : <Copy className="w-3.5 h-3.5" />}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Submit Actions */}
+        <div className="flex items-center justify-end gap-3 pt-2">
+          <button
+            type="submit"
+            className="px-6 py-2.5 rounded-lg text-xs font-bold text-primary-foreground flex items-center gap-2 cursor-pointer transition-all shadow-lg hover:opacity-95"
+            style={{
+              background: 'linear-gradient(135deg, #F59E0B, #D97706)',
+              boxShadow: '0 0 20px rgba(245, 158, 11, 0.35)'
+            }}
+          >
+            {isSaved ? <CheckCheck className="w-4 h-4" /> : <Save className="w-4 h-4" />}
+            {isSaved ? 'Settings Saved!' : 'Save Enclave Configuration'}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MODAL: OPERATOR AUTHENTICATION (LOGIN & REGISTER - BANANI THEME)
+// ─────────────────────────────────────────────────────────────────────────────
+function AuthModal({ isOpen, onClose, mode, setMode, onLoginSuccess, showToast }) {
+  const [email, setEmail] = useState('alex.chen@trustgate.dev');
+  const [password, setPassword] = useState('••••••••••••');
+  const [name, setName] = useState('Alex Chen');
+  const [org, setOrg] = useState('TrustGate Security Lab');
+  const [clearance, setClearance] = useState('L4 · ENCLAVE CRYPTO OFFICER');
+
+  if (!isOpen) return null;
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const initials = (name || 'AC').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'OP';
+    const userObj = {
+      name: name || 'Enclave Operator',
+      email: email || 'operator@trustgate.dev',
+      role: clearance.includes('L4') ? 'Lead SecOps Architect' : clearance.includes('L3') ? 'Senior Incident Responder' : 'Security Analyst',
+      clearance: clearance || 'L4 · ENCLAVE CRYPTO OFFICER',
+      org: org || 'SecOps Team',
+      avatar: initials,
+      hardwareToken: 'YubiKey 5Ci (FIDO2 #8491)',
+      sessionPublicKey: '0x' + Array.from({length: 32}, () => Math.floor(Math.random()*16).toString(16)).join(''),
+      registeredAt: new Date().toISOString().split('T')[0]
+    };
+    onLoginSuccess(userObj);
+  };
+
+  const handleDemoLogin = () => {
+    const demoUser = {
+      name: 'Alex Chen',
+      email: 'alex.chen@trustgate.dev',
+      role: 'Lead SecOps Architect',
+      clearance: 'L4 · ENCLAVE CRYPTO OFFICER',
+      org: 'TrustGate Security Lab',
+      avatar: 'AC',
+      hardwareToken: 'YubiKey 5Ci (FIDO2 #8491)',
+      sessionPublicKey: '0x8f2a1b9c8d7e6f5a4b3c2d1e0f9a8b7c',
+      registeredAt: '2024-10-14'
+    };
+    onLoginSuccess(demoUser);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fadeIn">
+      <div 
+        className="w-full max-w-md bg-panel border border-line rounded-xl p-6 sm:p-7 shadow-2xl relative"
+        style={{ boxShadow: '0 0 50px rgba(245,158,11,.15)' }}
+      >
+        <button 
+          onClick={onClose}
+          className="absolute top-4 right-4 text-muted-foreground hover:text-white p-1 rounded-md hover:bg-secondary/40 transition-colors"
+        >
+          <X className="w-4 h-4" />
+        </button>
+
+        {/* Modal Header */}
+        <div className="flex items-center gap-3 mb-5">
+          <div 
+            className="w-10 h-10 rounded-md flex items-center justify-center shrink-0 shadow-lg"
+            style={{
+              background: 'linear-gradient(135deg, #F59E0B, #C2410C 60%, #E11D48)',
+              boxShadow: '0 0 20px rgba(245,158,11,.4)'
+            }}
+          >
+            <Shield className="w-5 h-5 text-white stroke-[2.4]" />
+          </div>
+          <div>
+            <h3 className="text-white font-headings font-bold text-base leading-tight">TrustGate Enclave Authentication</h3>
+            <p className="text-muted-foreground text-xs mt-0.5">Zero-trust cryptographic operator verification</p>
+          </div>
+        </div>
+
+        {/* Tab Toggle: Sign In vs Register */}
+        <div className="grid grid-cols-2 gap-1 p-1 bg-black/60 rounded-lg border border-line mb-5 text-xs font-medium">
+          <button
+            type="button"
+            onClick={() => setMode('login')}
+            className={`py-2 rounded-md transition-all cursor-pointer ${
+              mode === 'login' 
+                ? 'bg-secondary text-cream font-bold border border-line' 
+                : 'text-muted-foreground hover:text-cream'
+            }`}
+          >
+            Sign In
+          </button>
+          <button
+            type="button"
+            onClick={() => setMode('register')}
+            className={`py-2 rounded-md transition-all cursor-pointer ${
+              mode === 'register' 
+                ? 'bg-secondary text-cream font-bold border border-line' 
+                : 'text-muted-foreground hover:text-cream'
+            }`}
+          >
+            Register Operator
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {mode === 'register' && (
+            <>
+              <div>
+                <label className="block text-[11px] font-mono text-muted-foreground mb-1">OPERATOR FULL NAME</label>
+                <input
+                  type="text"
+                  required
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="e.g. Alex Chen"
+                  className="w-full bg-black/70 border border-line rounded-lg px-3 py-2 text-xs text-cream outline-none focus:border-ember"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-mono text-muted-foreground mb-1">ENTERPRISE ORGANIZATION / LAB</label>
+                <input
+                  type="text"
+                  required
+                  value={org}
+                  onChange={(e) => setOrg(e.target.value)}
+                  placeholder="e.g. TrustGate Security Lab"
+                  className="w-full bg-black/70 border border-line rounded-lg px-3 py-2 text-xs text-cream outline-none focus:border-ember"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-mono text-muted-foreground mb-1">SECURITY CLEARANCE ROLE</label>
+                <select
+                  value={clearance}
+                  onChange={(e) => setClearance(e.target.value)}
+                  className="w-full bg-black/70 border border-line rounded-lg px-3 py-2 text-xs text-cream outline-none focus:border-ember font-mono"
+                >
+                  <option value="L4 · ENCLAVE CRYPTO OFFICER">Level 4 · Enclave Cryptographic Officer</option>
+                  <option value="L3 · SECOPS INCIDENT LEAD">Level 3 · SecOps Incident Lead</option>
+                  <option value="L2 · AI RISK ANALYST">Level 2 · AI Risk Analyst</option>
+                  <option value="L1 · GATEWAY OPERATOR">Level 1 · Gateway Operator</option>
+                </select>
+              </div>
+            </>
+          )}
+
+          <div>
+            <label className="block text-[11px] font-mono text-muted-foreground mb-1">WORK EMAIL</label>
+            <input
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="operator@trustgate.dev"
+              className="w-full bg-black/70 border border-line rounded-lg px-3 py-2 text-xs text-cream outline-none focus:border-ember font-mono"
+            />
+          </div>
+
+          <div>
+            <label className="block text-[11px] font-mono text-muted-foreground mb-1">MASTER ENCLAVE PASSWORD</label>
+            <input
+              type="password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••••••"
+              className="w-full bg-black/70 border border-line rounded-lg px-3 py-2 text-xs text-cream outline-none focus:border-ember font-mono"
+            />
+          </div>
+
+          <div className="p-2.5 rounded-lg bg-black/40 border border-line flex items-center justify-between text-[11px] font-mono text-muted-foreground">
+            <span className="flex items-center gap-1.5 text-mint">
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              Hardware Key Simulation
+            </span>
+            <span className="text-cream">FIDO2 Ready</span>
+          </div>
+
+          <button
+            type="submit"
+            style={{
+              background: 'linear-gradient(135deg, #F59E0B, #D97706)',
+              boxShadow: '0 0 20px rgba(245, 158, 11, 0.35)'
+            }}
+            className="w-full py-2.5 rounded-md text-xs font-bold text-primary-foreground hover:opacity-95 transition-all cursor-pointer mt-2"
+          >
+            {mode === 'login' ? 'Sign In to Enclave' : 'Register Enclave Operator'}
+          </button>
+        </form>
+
+        {/* Toggle between Register and Login Links */}
+        <div className="mt-4 pt-4 border-t border-line text-center text-xs">
+          {mode === 'login' ? (
+            <p className="text-muted-foreground">
+              Don't have an operator clearance?{' '}
+              <button
+                type="button"
+                onClick={() => setMode('register')}
+                className="text-ambersoft font-medium hover:underline cursor-pointer"
+              >
+                Register here
+              </button>
+            </p>
+          ) : (
+            <p className="text-muted-foreground">
+              Already have an operator account?{' '}
+              <button
+                type="button"
+                onClick={() => setMode('login')}
+                className="text-ambersoft font-medium hover:underline cursor-pointer"
+              >
+                Sign In
+              </button>
+            </p>
+          )}
+
+          {/* Quick Demo Access */}
+          <button
+            type="button"
+            onClick={handleDemoLogin}
+            className="mt-3 w-full py-1.5 rounded bg-secondary hover:bg-line text-cream text-[11px] font-mono border border-line flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-ambersoft" />
+            ⚡ Fast Demo Operator Login (Alex Chen · L4)
+          </button>
+        </div>
       </div>
     </div>
   );
