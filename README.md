@@ -159,9 +159,30 @@ flowchart TD
 
 ## 🎨 Live Dashboard & Design Aesthetics
 
-The frontend dashboard implements a high-performance design inspired by dark obsidian aesthetics:
+The frontend dashboard implements a high-performance design inspired by dark obsidian aesthetics ([Banani Prototype](https://app.banani.co/prototype/bVIqX48dxQJI)):
 
 - **Canvas Palette**: Deep Obsidian Charcoal (`#0A0A0B`), warm charcoal panels (`#141110`), solar ember accents (`#F59E0B`), warm coral alerts (`#F43F5E`), and emerald verification badges (`#10B981`).
+- **Hover-Expanding Sidebar Navigation**:
+  - Compact icon mode (`w-[72px]`) by default for maximum screen real estate.
+  - Expands smoothly on mouse hover to full width (`w-[280px]`) with zero main canvas reflow or jitter.
+  - Grouped navigation sections:
+    - **CORE GATEWAY**: `01 · Control Center`, `02 · Fraud Command`, `Email & URL Radar`
+    - **TESTING & COMPLIANCE**: `03 · Attack Sandbox`, `04 · Policy Matrix`, `05 · Merkle Ledger`
+    - **MANAGEMENT & CLEARANCE**: `Operator Profile`, `Gateway Settings`
+  - Footer operator status pill with live session key, quick settings trigger, and sign-out action.
+- **Operator Authentication Flow (Login & Register)**:
+  - Enterprise cryptographic verification modal inspired by the Banani prototype.
+  - **Login Mode**: Operator email, master passphrase, FIDO2 hardware key indicator, fast 1-click demo login (`Alex Chen · L4 Clearance`), and link to register.
+  - **Register Mode**: Full name, enterprise organization, clearance level dropdown (`L1 Gateway Operator` to `L4 Enclave Crypto Officer`), password, and link back to sign-in.
+- **Dedicated Operator Profile Page**:
+  - Clearance level banner (`L4 · ENCLAVE CRYPTO OFFICER`), TLS 1.3 wire-speed tunnel status, and IP binding.
+  - Cryptographic session public keys with one-click copy and instant key re-signing / rotation.
+  - RBAC permission matrix and chronological decision audit logs.
+- **Enclave Gateway Settings View**:
+  - **Runtime Posture**: Fail-Closed vs. Fail-Open toggle, sub-millisecond SLA hard cap (20ms ceiling), AES-256-GCM reversible vault switch.
+  - **Model Proxy Routing**: Upstream endpoint configuration, Anthropic Claude fallback provider, daily token budget fuses, and recursion sponge depth caps.
+  - **Incident Webhook Dispatch**: Real-time Slack webhook and PagerDuty routing with configurable minimum alert severity.
+  - **Secret Key Rotation**: Master live key rotation with automatic 60-minute sunset grace periods.
 - **Hero Orbit Core ($1120 \times 560$ SVG)**:
   - Central multi-orbit pulsing kernel with glowing SVG Bézier connector traces.
   - 4 floating satellite node cards:
