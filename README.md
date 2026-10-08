@@ -319,6 +319,8 @@ node test_email_url_fraud.js
 
 # 4. Enterprise Capabilities Suite (Reversible PII, Merkle Proofs, SOC 2 / GDPR Reports)
 node test_showstoppers.js
+# 5. Universal Email & URL Instant Safety Checker (13 Test Cases)
+node test_quick_check.js
 ```
 
 **Benchmark Results:**
@@ -338,10 +340,11 @@ node test_showstoppers.js
 
 | Method | Endpoint | Description |
 |---|---|---|
+| `POST` | `/api/v1/fraud/quick-check` | **Unified Safety Engine**: Inspects ANY email address, message, or URL and returns a definitive SAFE / UNSAFE verdict |
 | `POST` | `/api/v1/gateway/chat` | Main drop-in reverse proxy endpoint (OpenAI wire-compatible) |
 | `POST` | `/api/v1/gateway/inspect` | Raw inspection endpoint returning verdicts without upstream proxying |
-| `POST` | `/api/v1/fraud/email` | Forensic SPF/DKIM and body phishing threat analyzer |
-| `POST` | `/api/v1/fraud/url` | URL homograph, IP obfuscation, and credential delimiter scanner |
+| `POST` | `/api/v1/fraud/email/analyze` | Forensic SPF/DKIM and body phishing threat analyzer |
+| `POST` | `/api/v1/fraud/url/analyze` | URL homograph, IP obfuscation, executable payload, and credential delimiter scanner |
 | `GET` | `/api/v1/fraud/stats` | Aggregated fraud radar KPIs and repelled attack counters |
 | `GET` | `/api/v1/fraud/radar` | Live real-time stream of intercepted fraud events |
 | `GET` | `/api/v1/policies` | Fetches active compliance matrix and rule configurations |

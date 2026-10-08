@@ -1,6 +1,6 @@
 import express from 'express';
 import { z } from 'zod';
-import { analyzeEmailFraud, analyzeUrlFraud } from '../services/engine/emailUrlDetector.js';
+import { analyzeEmailFraud, analyzeUrlFraud, quickCheckSafety } from '../services/engine/emailUrlDetector.js';
 
 export const fraudRouter = express.Router();
 
@@ -13,6 +13,33 @@ const EmailAnalysisSchema = z.object({
 
 const UrlAnalysisSchema = z.object({
   url: z.string().min(1, 'Target URL or domain cannot be empty')
+});
+
+const QuickCheckSchema = z.object({
+  input: z.string().min(1, 'Target input (Email or URL) cannot be empty')
+});
+
+/**
+ * POST /api/v1/fraud/quick-check
+ * Unified safety checker: accepts ANY Email address, Email content, or URL and returns a definitive decision (SAFE / UNSAFE / SUSPICIOUS).
+ */
+fraudRouter.post('/quick-check', (req, res) => {
+  const parseResult = QuickCheckSchema.safeParse(req.body);
+  if (!parseResult.success) {
+    return res.status(400).json({
+      status: 'error',
+      error: 'Invalid input payload',
+      details: parseResult.error.issues
+    });
+  }
+
+  const { input } = parseResult.data;
+  const result = quickCheckSafety(input);
+
+  return res.json({
+    status: 'success',
+    report: result
+  });
 });
 
 /**
