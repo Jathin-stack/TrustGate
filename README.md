@@ -411,3 +411,5 @@ TrustGate/
 Distributed under the **MIT License**. See `LICENSE` for details.
 
 Developed with ❤️ for the next generation of safe, reliable autonomous AI agents.
+#   T r u s t G a t e  
+ 
