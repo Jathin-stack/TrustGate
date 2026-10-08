@@ -19,6 +19,7 @@ import {
   Coins, 
   Sparkles, 
   Eye, 
+  EyeOff,
   X, 
   Mail, 
   Globe, 
@@ -46,7 +47,21 @@ import {
 } from 'lucide-react';
 
 export default function TrustGateApp() {
-  const [activeTab, setActiveTab] = useState('control'); // 'control' | 'fraud' | 'email_url' | 'sandbox' | 'policies' | 'ledger' | 'profile' | 'settings'
+  const [currentUser, setCurrentUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem('trustgate_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  const [activeTab, setActiveTab] = useState(() => {
+    // If not authenticated, landing page is the auth gate; otherwise control center
+    const saved = localStorage.getItem('trustgate_user');
+    return saved ? 'control' : 'auth';
+  });
+
   const [isSdkModalOpen, setIsSdkModalOpen] = useState(false);
   const [copiedSdk, setCopiedSdk] = useState(false);
   const [selectedLog, setSelectedLog] = useState(null);
@@ -54,34 +69,6 @@ export default function TrustGateApp() {
   const [isSidebarHovered, setIsSidebarHovered] = useState(false);
 
   // Operator Authentication State
-  const [currentUser, setCurrentUser] = useState(() => {
-    try {
-      const saved = localStorage.getItem('trustgate_user');
-      return saved ? JSON.parse(saved) : {
-        name: 'Alex Chen',
-        email: 'alex.chen@trustgate.dev',
-        role: 'Lead SecOps Architect',
-        clearance: 'L4 · ENCLAVE CRYPTO OFFICER',
-        org: 'TrustGate Security Lab',
-        avatar: 'AC',
-        hardwareToken: 'YubiKey 5Ci (FIDO2 #8491)',
-        sessionPublicKey: '0x8f2a1b9c8d7e6f5a4b3c2d1e0f9a8b7c',
-        registeredAt: '2024-10-14'
-      };
-    } catch {
-      return {
-        name: 'Alex Chen',
-        email: 'alex.chen@trustgate.dev',
-        role: 'Lead SecOps Architect',
-        clearance: 'L4 · ENCLAVE CRYPTO OFFICER',
-        org: 'TrustGate Security Lab',
-        avatar: 'AC',
-        hardwareToken: 'YubiKey 5Ci (FIDO2 #8491)',
-        sessionPublicKey: '0x8f2a1b9c8d7e6f5a4b3c2d1e0f9a8b7c',
-        registeredAt: '2024-10-14'
-      };
-    }
-  });
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState('login'); // 'login' | 'register'
   const [authToast, setAuthToast] = useState(null);
@@ -94,7 +81,8 @@ export default function TrustGateApp() {
   const handleLogout = () => {
     setCurrentUser(null);
     localStorage.removeItem('trustgate_user');
-    showToast('Signed out of Enclave session. Operating in Guest mode.', 'info');
+    setActiveTab('auth');
+    showToast('Signed out of Enclave session. Please authenticate to access Control Center.', 'info');
   };
 
   // Live Simulated Telemetry Stream (backed by Supabase Realtime)
@@ -257,8 +245,9 @@ export default function TrustGateApp() {
               {
                 group: 'MANAGEMENT & CLEARANCE',
                 items: [
-                  { id: 'profile', label: 'Operator Profile', icon: User, badge: currentUser ? 'L4' : 'Guest' },
+                  { id: 'profile', label: 'Operator Profile', icon: User, badge: currentUser ? (currentUser.clearance.split('·')[0].trim()) : 'Guest' },
                   { id: 'settings', label: 'Gateway Settings', icon: Settings, badge: 'Config' },
+                  { id: 'auth', label: currentUser ? 'Switch Operator' : 'Sign In / Register', icon: LogIn, badge: currentUser ? 'Enrolled' : 'Auth' },
                 ]
               }
             ].map((section, sIdx) => (
@@ -361,7 +350,7 @@ export default function TrustGateApp() {
               <button
                 onClick={() => {
                   setAuthMode('login');
-                  setIsAuthModalOpen(true);
+                  setActiveTab('auth');
                 }}
                 className={`w-full py-2 rounded-md bg-ember/15 text-ambersoft border border-ember/30 hover:bg-ember/25 transition-all text-xs font-semibold flex items-center justify-center gap-2 cursor-pointer ${
                   !isSidebarHovered ? 'px-0' : 'px-3'
@@ -369,7 +358,7 @@ export default function TrustGateApp() {
                 title="Sign In to Enclave"
               >
                 <LogIn className="w-4 h-4 shrink-0" />
-                {isSidebarHovered && <span>Sign In</span>}
+                {isSidebarHovered && <span>Sign In / Register</span>}
               </button>
             </div>
           )}
@@ -387,14 +376,15 @@ export default function TrustGateApp() {
                 <span className="text-cream">TrustGate Enclave</span>
                 <span>/</span>
                 <span className="text-ambersoft font-bold uppercase">
-                  {activeTab === 'control' && '01 · Control Center'}
-                  {activeTab === 'fraud' && '02 · Fraud Command'}
-                  {activeTab === 'email_url' && 'Email & URL Fraud Radar'}
-                  {activeTab === 'sandbox' && '03 · Attack Sandbox'}
-                  {activeTab === 'policies' && '04 · Policy Matrix'}
-                  {activeTab === 'ledger' && '05 · Merkle Audit Ledger'}
-                  {activeTab === 'profile' && 'Operator Clearance & Profile'}
-                  {activeTab === 'settings' && 'Enclave Gateway Settings'}
+                  {(!currentUser || activeTab === 'auth') && 'Operator Authentication Gate'}
+                  {currentUser && activeTab === 'control' && '01 · Control Center'}
+                  {currentUser && activeTab === 'fraud' && '02 · Fraud Command'}
+                  {currentUser && activeTab === 'email_url' && 'Email & URL Fraud Radar'}
+                  {currentUser && activeTab === 'sandbox' && '03 · Attack Sandbox'}
+                  {currentUser && activeTab === 'policies' && '04 · Policy Matrix'}
+                  {currentUser && activeTab === 'ledger' && '05 · Merkle Audit Ledger'}
+                  {currentUser && activeTab === 'profile' && 'Operator Clearance & Profile'}
+                  {currentUser && activeTab === 'settings' && 'Enclave Gateway Settings'}
                 </span>
               </div>
             </div>
@@ -432,14 +422,17 @@ export default function TrustGateApp() {
                     {currentUser.avatar || 'AC'}
                   </div>
                   <span className="text-cream hidden sm:inline">{currentUser.name}</span>
+                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-verdant/15 text-mint border border-verdant/30">
+                    {currentUser.clearance.split('·')[0]}
+                  </span>
                 </button>
               ) : (
                 <button
                   onClick={() => {
                     setAuthMode('login');
-                    setIsAuthModalOpen(true);
+                    setActiveTab('auth');
                   }}
-                  className="px-3 py-1.5 rounded-md text-xs font-semibold bg-ember/20 text-ambersoft border border-ember/40 hover:bg-ember/30 transition-all flex items-center gap-1.5 cursor-pointer"
+                  className="px-3.5 py-1.5 rounded-md text-xs font-semibold bg-ember/20 text-ambersoft border border-ember/40 hover:bg-ember/30 transition-all flex items-center gap-1.5 cursor-pointer"
                 >
                   <LogIn className="w-3.5 h-3.5" />
                   Sign In / Register
@@ -451,32 +444,48 @@ export default function TrustGateApp() {
 
         {/* Main Application Router */}
         <main className="max-w-[1440px] w-full mx-auto px-4 sm:px-8 py-8 relative flex-1">
-          {activeTab === 'control' && (
-            <ControlCenterView 
-              onOpenLog={(log) => setSelectedLog(log)} 
-              logs={logs} 
-              onSwitchTab={setActiveTab} 
-              supabaseConnected={supabaseConnected} 
-            />
-          )}
-          {activeTab === 'fraud' && <FraudCommandView />}
-          {activeTab === 'email_url' && <EmailUrlFraudCenterView />}
-          {activeTab === 'sandbox' && <AttackSandboxView />}
-          {activeTab === 'policies' && <PoliciesView />}
-          {activeTab === 'ledger' && <AuditLedgerView />}
-          {activeTab === 'profile' && (
-            <ProfileView 
-              user={currentUser} 
-              onSwitchAuth={() => {
-                setAuthMode('login');
-                setIsAuthModalOpen(true);
+          {(!currentUser || activeTab === 'auth') ? (
+            <AuthPageView 
+              onLoginSuccess={(user) => {
+                setCurrentUser(user);
+                localStorage.setItem('trustgate_user', JSON.stringify(user));
+                setActiveTab('control');
+                showToast(`Access Authorized: Welcome, ${user.name}! Enclave Control Center loaded.`, 'success');
               }}
-              onLogout={handleLogout}
-              onUpdateUser={setCurrentUser}
+              initialMode={authMode}
               showToast={showToast}
+              onCancel={currentUser ? () => setActiveTab('control') : null}
             />
+          ) : (
+            <>
+              {activeTab === 'control' && (
+                <ControlCenterView 
+                  onOpenLog={(log) => setSelectedLog(log)} 
+                  logs={logs} 
+                  onSwitchTab={setActiveTab} 
+                  supabaseConnected={supabaseConnected} 
+                />
+              )}
+              {activeTab === 'fraud' && <FraudCommandView />}
+              {activeTab === 'email_url' && <EmailUrlFraudCenterView />}
+              {activeTab === 'sandbox' && <AttackSandboxView />}
+              {activeTab === 'policies' && <PoliciesView />}
+              {activeTab === 'ledger' && <AuditLedgerView />}
+              {activeTab === 'profile' && (
+                <ProfileView 
+                  user={currentUser} 
+                  onSwitchAuth={() => {
+                    setAuthMode('login');
+                    setActiveTab('auth');
+                  }}
+                  onLogout={handleLogout}
+                  onUpdateUser={setCurrentUser}
+                  showToast={showToast}
+                />
+              )}
+              {activeTab === 'settings' && <SettingsView showToast={showToast} />}
+            </>
           )}
-          {activeTab === 'settings' && <SettingsView showToast={showToast} />}
 
           {/* Banani Bottom Footer */}
           <footer className="mt-12 rounded-lg border border-line bg-panel/60 px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -2982,58 +2991,811 @@ function SettingsView({ showToast }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// MODAL: OPERATOR AUTHENTICATION (LOGIN & REGISTER - BANANI THEME)
+// OPERATOR ENCLAVE AUTHENTICATION SYSTEM (BANANI THEME & ZERO-TRUST GATE)
 // ─────────────────────────────────────────────────────────────────────────────
-function AuthModal({ isOpen, onClose, mode, setMode, onLoginSuccess, showToast }) {
+
+const DEFAULT_OPERATORS = [
+  {
+    email: 'alex.chen@trustgate.dev',
+    password: 'TrustGate2026!',
+    name: 'Alex Chen',
+    role: 'Lead SecOps Architect',
+    clearance: 'L4 · ENCLAVE CRYPTO OFFICER',
+    org: 'TrustGate Security Lab',
+    avatar: 'AC',
+    hardwareToken: 'YubiKey 5Ci (FIDO2 #8491)',
+    sessionPublicKey: '0x8f2a1b9c8d7e6f5a4b3c2d1e0f9a8b7c',
+    registeredAt: '2024-10-14'
+  },
+  {
+    email: 'sarah.kim@trustgate.dev',
+    password: 'Enclave2026!',
+    name: 'Sarah Kim',
+    role: 'Senior Incident Responder',
+    clearance: 'L3 · SECOPS INCIDENT LEAD',
+    org: 'SecOps Incident Response',
+    avatar: 'SK',
+    hardwareToken: 'Titan Security Key #2911',
+    sessionPublicKey: '0x4a7e2c9f1d8b6a3e5c0f7b2e9d4a1c8f',
+    registeredAt: '2025-01-22'
+  }
+];
+
+function getEnrolledOperators() {
+  try {
+    const raw = localStorage.getItem('trustgate_registered_users');
+    if (!raw) return DEFAULT_OPERATORS;
+    const custom = JSON.parse(raw);
+    return Array.isArray(custom) ? [...DEFAULT_OPERATORS, ...custom] : DEFAULT_OPERATORS;
+  } catch {
+    return DEFAULT_OPERATORS;
+  }
+}
+
+function saveEnrolledOperator(newOp) {
+  try {
+    const raw = localStorage.getItem('trustgate_registered_users');
+    const list = raw ? JSON.parse(raw) : [];
+    list.push(newOp);
+    localStorage.setItem('trustgate_registered_users', JSON.stringify(list));
+  } catch (err) {
+    console.error('Failed to persist enrolled operator:', err);
+  }
+}
+
+const DISPOSABLE_EMAIL_DOMAINS = [
+  'tempmail.com', 'throwaway.com', 'guerrillamail.com', 'mailinator.com',
+  '10minutemail.com', 'temp-mail.org', 'trashmail.com', 'sharklasers.com',
+  'yopmail.com', 'dispostable.com', 'getnada.com', 'fakemailgenerator.com'
+];
+
+function OperatorAuthForm({ mode: initialMode = 'login', onLoginSuccess, showToast, isModal = false, onClose }) {
+  const [mode, setMode] = useState(initialMode);
   const [email, setEmail] = useState('alex.chen@trustgate.dev');
-  const [password, setPassword] = useState('••••••••••••');
-  const [name, setName] = useState('Alex Chen');
+  const [password, setPassword] = useState('TrustGate2026!');
+  const [name, setName] = useState('');
   const [org, setOrg] = useState('TrustGate Security Lab');
   const [clearance, setClearance] = useState('L4 · ENCLAVE CRYPTO OFFICER');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  if (!isOpen) return null;
+  // Specific error pointing state
+  const [error, setError] = useState(null); // { field, message, code, timestamp }
+  const [successMsg, setSuccessMsg] = useState(null);
+  const [isAuthorizing, setIsAuthorizing] = useState(false);
+
+  // Reset errors when mode changes
+  const switchMode = (newMode) => {
+    setMode(newMode);
+    setError(null);
+    setSuccessMsg(null);
+    if (newMode === 'login') {
+      setEmail('alex.chen@trustgate.dev');
+      setPassword('TrustGate2026!');
+    } else {
+      setEmail('');
+      setPassword('');
+      setConfirmPassword('');
+      setName('');
+    }
+  };
+
+  const handleFastDemo = (demoType = 'alex') => {
+    setError(null);
+    setSuccessMsg(null);
+    const demo = demoType === 'alex' ? DEFAULT_OPERATORS[0] : DEFAULT_OPERATORS[1];
+    setEmail(demo.email);
+    setPassword(demo.password);
+    setMode('login');
+    setIsAuthorizing(true);
+    setSuccessMsg(`AUTHORIZATION APPROVED · Demo Clearance (${demo.clearance.split('·')[0]}) Verified. Welcome, ${demo.name}! Redirecting to Control Center...`);
+    setTimeout(() => {
+      onLoginSuccess(demo);
+    }, 450);
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const initials = (name || 'AC').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'OP';
-    const userObj = {
-      name: name || 'Enclave Operator',
-      email: email || 'operator@trustgate.dev',
-      role: clearance.includes('L4') ? 'Lead SecOps Architect' : clearance.includes('L3') ? 'Senior Incident Responder' : 'Security Analyst',
-      clearance: clearance || 'L4 · ENCLAVE CRYPTO OFFICER',
-      org: org || 'SecOps Team',
-      avatar: initials,
-      hardwareToken: 'YubiKey 5Ci (FIDO2 #8491)',
-      sessionPublicKey: '0x' + Array.from({length: 32}, () => Math.floor(Math.random()*16).toString(16)).join(''),
-      registeredAt: new Date().toISOString().split('T')[0]
-    };
-    onLoginSuccess(userObj);
+    setError(null);
+    setSuccessMsg(null);
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const cleanEmail = (email || '').trim();
+    const domain = cleanEmail.split('@')[1]?.toLowerCase();
+    const timestamp = new Date().toLocaleTimeString();
+
+    if (mode === 'login') {
+      // 1. Email check
+      if (!cleanEmail) {
+        setError({
+          field: 'email',
+          message: 'Operator email address is required for session initiation.',
+          code: 'ERR_MISSING_EMAIL',
+          timestamp
+        });
+        return;
+      }
+
+      if (!emailRegex.test(cleanEmail)) {
+        setError({
+          field: 'email',
+          message: 'Malformed email format. Enclave credentials require an RFC 5322 compliant work email (e.g. operator@domain.com).',
+          code: 'ERR_INVALID_EMAIL_FORMAT',
+          timestamp
+        });
+        return;
+      }
+
+      if (DISPOSABLE_EMAIL_DOMAINS.includes(domain)) {
+        setError({
+          field: 'email',
+          message: `ACCESS DENIED: Temporary / disposable domain '@${domain}' is strictly barred under Enclave Zero-Trust Policy SEC-09.`,
+          code: 'ERR_DISPOSABLE_DOMAIN_BLOCKED',
+          timestamp
+        });
+        return;
+      }
+
+      // 2. Operator Lookup
+      const operators = getEnrolledOperators();
+      const operator = operators.find(op => op.email.toLowerCase() === cleanEmail.toLowerCase());
+
+      if (!operator) {
+        setError({
+          field: 'email',
+          message: `ACCESS DENIED · UNREGISTERED OPERATOR: No active cryptographic identity found for '${cleanEmail}'. Please check your email or click "Register Operator" to enroll.`,
+          code: 'ERR_UNKNOWN_OPERATOR_DENIED',
+          timestamp
+        });
+        return;
+      }
+
+      // 3. Password Verification
+      if (!password) {
+        setError({
+          field: 'password',
+          message: 'Master enclave cryptographic passphrase is required.',
+          code: 'ERR_MISSING_PASSPHRASE',
+          timestamp
+        });
+        return;
+      }
+
+      if (operator.password && password !== operator.password) {
+        setError({
+          field: 'password',
+          message: `ACCESS DENIED · CRYPTOGRAPHIC SIGNATURE MISMATCH: The master enclave passphrase provided does not match the enrolled cryptographic signature for '${cleanEmail}'. Verification failed. Access strictly denied.`,
+          code: 'ERR_CRYPTO_SIGNATURE_MISMATCH',
+          timestamp
+        });
+        return;
+      }
+
+      // 4. Authorized Success
+      setIsAuthorizing(true);
+      setSuccessMsg(`AUTHORIZATION APPROVED · Cryptographic clearance verified. Welcome, ${operator.name}! Redirecting to Control Center...`);
+      setTimeout(() => {
+        onLoginSuccess(operator);
+      }, 400);
+
+    } else {
+      // Register Mode Validation
+      if (!name.trim() || name.trim().length < 2) {
+        setError({
+          field: 'name',
+          message: 'Full operator name is required for enclave identity attestation (minimum 2 characters).',
+          code: 'ERR_INVALID_NAME',
+          timestamp
+        });
+        return;
+      }
+
+      if (!org.trim()) {
+        setError({
+          field: 'org',
+          message: 'Enterprise organization or research lab designation is required.',
+          code: 'ERR_MISSING_ORG',
+          timestamp
+        });
+        return;
+      }
+
+      if (!cleanEmail || !emailRegex.test(cleanEmail)) {
+        setError({
+          field: 'email',
+          message: 'A valid enterprise work email address is required for identity attestation.',
+          code: 'ERR_INVALID_EMAIL_FORMAT',
+          timestamp
+        });
+        return;
+      }
+
+      if (DISPOSABLE_EMAIL_DOMAINS.includes(domain)) {
+        setError({
+          field: 'email',
+          message: `REGISTRATION DENIED: Disposable email domain '@${domain}' violates Zero-Trust enrollment protocols.`,
+          code: 'ERR_DISPOSABLE_DOMAIN_BLOCKED',
+          timestamp
+        });
+        return;
+      }
+
+      // Check if already registered
+      const operators = getEnrolledOperators();
+      const existing = operators.find(op => op.email.toLowerCase() === cleanEmail.toLowerCase());
+      if (existing) {
+        setError({
+          field: 'email',
+          message: `REGISTRATION REJECTED · OPERATOR ALREADY ENROLLED: Identity '${cleanEmail}' is already enrolled with active clearance. Please switch to Sign In.`,
+          code: 'ERR_OPERATOR_ALREADY_EXISTS',
+          timestamp
+        });
+        return;
+      }
+
+      // Password checks
+      if (!password || password.length < 8) {
+        setError({
+          field: 'password',
+          message: 'Passphrase too weak: Enclave policies require at least 8 characters with cryptographic complexity.',
+          code: 'ERR_WEAK_PASSPHRASE',
+          timestamp
+        });
+        return;
+      }
+
+      if (password !== confirmPassword) {
+        setError({
+          field: 'confirmPassword',
+          message: 'Passphrase confirmation mismatch: Master passwords must match identically.',
+          code: 'ERR_PASSPHRASE_MISMATCH',
+          timestamp
+        });
+        return;
+      }
+
+      // Register success
+      const initials = name.trim().split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'OP';
+      const newOperator = {
+        name: name.trim(),
+        email: cleanEmail,
+        password: password,
+        role: clearance.includes('L4') ? 'Lead SecOps Architect' : clearance.includes('L3') ? 'Senior Incident Responder' : clearance.includes('L2') ? 'AI Risk Analyst' : 'Gateway Operator',
+        clearance: clearance,
+        org: org.trim(),
+        avatar: initials,
+        hardwareToken: 'Hardware Key (FIDO2 #' + Math.floor(1000 + Math.random() * 9000) + ')',
+        sessionPublicKey: '0x' + Array.from({length: 32}, () => Math.floor(Math.random()*16).toString(16)).join(''),
+        registeredAt: new Date().toISOString().split('T')[0]
+      };
+
+      saveEnrolledOperator(newOperator);
+      setIsAuthorizing(true);
+      setSuccessMsg(`REGISTRATION SUCCESSFUL · Operator clearance provisioned for ${newOperator.name} (${newOperator.clearance.split('·')[0]}). Redirecting to Control Center...`);
+      setTimeout(() => {
+        onLoginSuccess(newOperator);
+      }, 400);
+    }
   };
 
-  const handleDemoLogin = () => {
-    const demoUser = {
-      name: 'Alex Chen',
-      email: 'alex.chen@trustgate.dev',
-      role: 'Lead SecOps Architect',
-      clearance: 'L4 · ENCLAVE CRYPTO OFFICER',
-      org: 'TrustGate Security Lab',
-      avatar: 'AC',
-      hardwareToken: 'YubiKey 5Ci (FIDO2 #8491)',
-      sessionPublicKey: '0x8f2a1b9c8d7e6f5a4b3c2d1e0f9a8b7c',
-      registeredAt: '2024-10-14'
-    };
-    onLoginSuccess(demoUser);
-  };
+  return (
+    <div className="w-full">
+      {/* Tab Switcher: Sign In vs Register */}
+      <div className="grid grid-cols-2 gap-1.5 p-1 bg-black/60 rounded-xl border border-line mb-5 text-xs font-medium">
+        <button
+          type="button"
+          onClick={() => switchMode('login')}
+          className={`py-2.5 rounded-lg transition-all cursor-pointer flex items-center justify-center gap-2 ${
+            mode === 'login' 
+              ? 'bg-secondary text-cream font-bold border border-line shadow-sm' 
+              : 'text-muted-foreground hover:text-cream'
+          }`}
+        >
+          <LogIn className="w-3.5 h-3.5" />
+          <span>Sign In</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => switchMode('register')}
+          className={`py-2.5 rounded-lg transition-all cursor-pointer flex items-center justify-center gap-2 ${
+            mode === 'register' 
+              ? 'bg-secondary text-cream font-bold border border-line shadow-sm' 
+              : 'text-muted-foreground hover:text-cream'
+          }`}
+        >
+          <UserPlus className="w-3.5 h-3.5" />
+          <span>Register Operator</span>
+        </button>
+      </div>
+
+      {/* ACCESS DENIED ALERT CARD (Specific Error Display) */}
+      {error && (
+        <div className="mb-5 p-4 rounded-xl border border-rose-500/60 bg-rose-950/40 text-rose-200 shadow-xl animate-fadeIn relative overflow-hidden">
+          <div className="flex items-start gap-3">
+            <div className="p-2 rounded-lg bg-rose-500/20 text-rose-400 border border-rose-500/40 shrink-0 mt-0.5">
+              <ShieldAlert className="w-5 h-5 stroke-[2.2]" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between gap-2 mb-1 flex-wrap">
+                <span className="font-mono text-[11px] font-bold tracking-wider text-rose-400 uppercase flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-rose-500 inline-block animate-ping" />
+                  ACCESS DENIED · ENCLAVE SECURITY SHIELD
+                </span>
+                <span className="font-mono text-[10px] text-rose-300/80 border border-rose-500/30 px-1.5 py-0.5 rounded bg-rose-950/60">
+                  {error.code}
+                </span>
+              </div>
+              <p className="text-xs text-rose-100 font-medium leading-relaxed">
+                {error.message}
+              </p>
+              {error.field && (
+                <div className="flex items-center gap-2 mt-2 pt-2 border-t border-rose-500/20 text-[11px] font-mono text-rose-300/80">
+                  <span>Target Fault:</span>
+                  <span className="px-1.5 py-0.5 rounded bg-rose-500/20 border border-rose-500/40 font-bold uppercase text-rose-200">
+                    {error.field}
+                  </span>
+                  <span className="text-[10px] text-rose-400/60 ml-auto">Intercepted at {error.timestamp}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* AUTHORIZATION APPROVED CARD */}
+      {successMsg && (
+        <div className="mb-5 p-4 rounded-xl border border-emerald-500/60 bg-emerald-950/40 text-emerald-200 shadow-xl animate-fadeIn">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 shrink-0">
+              <ShieldCheck className="w-5 h-5 stroke-[2.2]" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="font-mono text-[11px] font-bold tracking-wider text-emerald-400 uppercase flex items-center gap-1.5">
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                AUTHORIZATION APPROVED · ZERO-TRUST CLEARANCE
+              </div>
+              <p className="text-xs text-emerald-100 font-medium mt-0.5">
+                {successMsg}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Main Authentication Form */}
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {mode === 'register' && (
+          <>
+            <div>
+              <label className="block text-[11px] font-mono text-muted-foreground mb-1">
+                OPERATOR FULL NAME <span className="text-coral">*</span>
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => {
+                    setName(e.target.value);
+                    if (error?.field === 'name') setError(null);
+                  }}
+                  placeholder="e.g. Alex Chen"
+                  className={`w-full bg-black/70 border rounded-lg px-3.5 py-2.5 text-xs text-cream outline-none transition-colors ${
+                    error?.field === 'name'
+                      ? 'border-rose-500 bg-rose-950/20 text-rose-100 focus:border-rose-400'
+                      : 'border-line focus:border-ember'
+                  }`}
+                />
+                <User className="w-4 h-4 text-muted-foreground absolute right-3 top-3 pointer-events-none" />
+              </div>
+              {error?.field === 'name' && (
+                <div className="flex items-center gap-1.5 text-rose-400 text-[11px] font-mono mt-1">
+                  <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                  <span>{error.message}</span>
+                </div>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-[11px] font-mono text-muted-foreground mb-1">
+                ENTERPRISE LAB / ORGANIZATION <span className="text-coral">*</span>
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={org}
+                  onChange={(e) => {
+                    setOrg(e.target.value);
+                    if (error?.field === 'org') setError(null);
+                  }}
+                  placeholder="e.g. TrustGate Security Lab"
+                  className={`w-full bg-black/70 border rounded-lg px-3.5 py-2.5 text-xs text-cream outline-none transition-colors ${
+                    error?.field === 'org'
+                      ? 'border-rose-500 bg-rose-950/20 text-rose-100 focus:border-rose-400'
+                      : 'border-line focus:border-ember'
+                  }`}
+                />
+                <Building className="w-4 h-4 text-muted-foreground absolute right-3 top-3 pointer-events-none" />
+              </div>
+              {error?.field === 'org' && (
+                <div className="flex items-center gap-1.5 text-rose-400 text-[11px] font-mono mt-1">
+                  <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                  <span>{error.message}</span>
+                </div>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-[11px] font-mono text-muted-foreground mb-1">SECURITY CLEARANCE ROLE</label>
+              <select
+                value={clearance}
+                onChange={(e) => setClearance(e.target.value)}
+                className="w-full bg-black/70 border border-line rounded-lg px-3.5 py-2.5 text-xs text-cream outline-none focus:border-ember font-mono"
+              >
+                <option value="L4 · ENCLAVE CRYPTO OFFICER">Level 4 · Enclave Cryptographic Officer</option>
+                <option value="L3 · SECOPS INCIDENT LEAD">Level 3 · SecOps Incident Lead</option>
+                <option value="L2 · AI RISK ANALYST">Level 2 · AI Risk Analyst</option>
+                <option value="L1 · GATEWAY OPERATOR">Level 1 · Gateway Operator</option>
+              </select>
+            </div>
+          </>
+        )}
+
+        <div>
+          <label className="block text-[11px] font-mono text-muted-foreground mb-1">
+            WORK EMAIL IDENTIFIER <span className="text-coral">*</span>
+          </label>
+          <div className="relative">
+            <input
+              type="text"
+              value={email}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                if (error?.field === 'email') setError(null);
+              }}
+              placeholder="operator@trustgate.dev"
+              className={`w-full bg-black/70 border rounded-lg px-3.5 py-2.5 text-xs text-cream outline-none font-mono transition-colors ${
+                error?.field === 'email'
+                  ? 'border-rose-500 bg-rose-950/20 text-rose-100 focus:border-rose-400'
+                  : 'border-line focus:border-ember'
+              }`}
+            />
+            <Mail className="w-4 h-4 text-muted-foreground absolute right-3 top-3 pointer-events-none" />
+          </div>
+          {error?.field === 'email' && (
+            <div className="flex items-center gap-1.5 text-rose-400 text-[11px] font-mono mt-1.5">
+              <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+              <span>{error.message}</span>
+            </div>
+          )}
+        </div>
+
+        <div>
+          <div className="flex items-center justify-between mb-1">
+            <label className="block text-[11px] font-mono text-muted-foreground">
+              MASTER ENCLAVE PASSPHRASE <span className="text-coral">*</span>
+            </label>
+            {mode === 'login' && (
+              <span className="text-[10px] font-mono text-muted-foreground">Demo: TrustGate2026!</span>
+            )}
+          </div>
+          <div className="relative">
+            <input
+              type={showPassword ? 'text' : 'password'}
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                if (error?.field === 'password') setError(null);
+              }}
+              placeholder="••••••••••••"
+              className={`w-full bg-black/70 border rounded-lg px-3.5 py-2.5 pr-10 text-xs text-cream outline-none font-mono transition-colors ${
+                error?.field === 'password'
+                  ? 'border-rose-500 bg-rose-950/20 text-rose-100 focus:border-rose-400'
+                  : 'border-line focus:border-ember'
+              }`}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-2.5 text-muted-foreground hover:text-white cursor-pointer p-0.5"
+            >
+              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
+          </div>
+          {error?.field === 'password' && (
+            <div className="flex items-center gap-1.5 text-rose-400 text-[11px] font-mono mt-1.5">
+              <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+              <span>{error.message}</span>
+            </div>
+          )}
+        </div>
+
+        {mode === 'register' && (
+          <div>
+            <label className="block text-[11px] font-mono text-muted-foreground mb-1">
+              CONFIRM PASSPHRASE <span className="text-coral">*</span>
+            </label>
+            <div className="relative">
+              <input
+                type={showConfirmPassword ? 'text' : 'password'}
+                value={confirmPassword}
+                onChange={(e) => {
+                  setConfirmPassword(e.target.value);
+                  if (error?.field === 'confirmPassword') setError(null);
+                }}
+                placeholder="••••••••••••"
+                className={`w-full bg-black/70 border rounded-lg px-3.5 py-2.5 pr-10 text-xs text-cream outline-none font-mono transition-colors ${
+                  error?.field === 'confirmPassword'
+                    ? 'border-rose-500 bg-rose-950/20 text-rose-100 focus:border-rose-400'
+                    : 'border-line focus:border-ember'
+                }`}
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute right-3 top-2.5 text-muted-foreground hover:text-white cursor-pointer p-0.5"
+              >
+                {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+            {error?.field === 'confirmPassword' && (
+              <div className="flex items-center gap-1.5 text-rose-400 text-[11px] font-mono mt-1.5">
+                <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                <span>{error.message}</span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Hardware Token & Enclave Shield Indicator */}
+        <div className="p-3 rounded-lg bg-black/40 border border-line flex items-center justify-between text-[11px] font-mono text-muted-foreground">
+          <span className="flex items-center gap-1.5 text-mint">
+            <CheckCircle2 className="w-3.5 h-3.5" />
+            Hardware FIDO2 Token
+          </span>
+          <span className="text-cream">Secured Enclave</span>
+        </div>
+
+        {/* Submit Button */}
+        <button
+          type="submit"
+          disabled={isAuthorizing}
+          style={{
+            background: 'linear-gradient(135deg, #F59E0B, #D97706)',
+            boxShadow: '0 0 25px rgba(245, 158, 11, 0.4)'
+          }}
+          className="w-full py-3 rounded-xl text-xs font-bold text-primary-foreground hover:opacity-95 transition-all cursor-pointer mt-2 flex items-center justify-center gap-2 disabled:opacity-50"
+        >
+          {isAuthorizing ? (
+            <>
+              <RefreshCw className="w-4 h-4 animate-spin" />
+              <span>Verifying Cryptographic Credentials...</span>
+            </>
+          ) : (
+            <>
+              {mode === 'login' ? <LogIn className="w-4 h-4" /> : <UserPlus className="w-4 h-4" />}
+              <span>{mode === 'login' ? 'Authenticate & Enter Enclave' : 'Enroll Cryptographic Operator'}</span>
+            </>
+          )}
+        </button>
+      </form>
+
+      {/* Switcher & Fast Demo Section */}
+      <div className="mt-5 pt-4 border-t border-line text-center text-xs space-y-3">
+        {mode === 'login' ? (
+          <p className="text-muted-foreground">
+            Don't have an operator clearance?{' '}
+            <button
+              type="button"
+              onClick={() => switchMode('register')}
+              className="text-ambersoft font-medium hover:underline cursor-pointer"
+            >
+              Register here
+            </button>
+          </p>
+        ) : (
+          <p className="text-muted-foreground">
+            Already enrolled in the enclave?{' '}
+            <button
+              type="button"
+              onClick={() => switchMode('login')}
+              className="text-ambersoft font-medium hover:underline cursor-pointer"
+            >
+              Sign In
+            </button>
+          </p>
+        )}
+
+        {/* 1-Click Fast Demo Operators */}
+        <div className="pt-2">
+          <div className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider mb-2">
+            1-Click Demo Operator Handshakes
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => handleFastDemo('alex')}
+              className="py-2 px-2.5 rounded-lg bg-secondary/80 hover:bg-secondary text-cream text-[11px] font-mono border border-line flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-ambersoft shrink-0" />
+              <span className="truncate">Alex Chen (L4 Officer)</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleFastDemo('sarah')}
+              className="py-2 px-2.5 rounded-lg bg-secondary/80 hover:bg-secondary text-cream text-[11px] font-mono border border-line flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-mint shrink-0" />
+              <span className="truncate">Sarah Kim (L3 SecOps)</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AUTHENTICATION FULL-PAGE VIEW (BANANI PROTOTYPE THEME)
+// ─────────────────────────────────────────────────────────────────────────────
+function AuthPageView({ onLoginSuccess, initialMode = 'login', showToast, onCancel }) {
+  return (
+    <div className="min-h-[80vh] flex items-center justify-center py-6 px-2 sm:px-4 animate-fadeIn">
+      <div className="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+        
+        {/* Left Column: Banani Zero-Trust Enclave Branding & Hero */}
+        <div className="lg:col-span-6 space-y-6">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-line bg-panel/70 font-mono text-xs text-ambersoft">
+            <span className="w-1.5 h-1.5 rounded-full bg-ember tg-blink" />
+            <span>ZERO-TRUST OPERATOR CLEARANCE · GA</span>
+          </div>
+
+          <div>
+            <div className="flex items-center gap-3 mb-3">
+              <div 
+                className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 shadow-2xl"
+                style={{
+                  background: 'linear-gradient(135deg, #F59E0B, #C2410C 60%, #E11D48)',
+                  boxShadow: '0 0 35px rgba(245,158,11,.45)'
+                }}
+              >
+                <Shield className="w-6 h-6 text-white stroke-[2.4]" />
+              </div>
+              <div>
+                <h1 className="text-3xl sm:text-4xl font-headings font-extrabold text-white tracking-tight leading-tight">
+                  TrustGate Enclave
+                </h1>
+                <p className="text-ambersoft font-mono text-xs">
+                  Zero-Knowledge AI Security & Model Reverse Proxy
+                </p>
+              </div>
+            </div>
+            
+            <p className="text-muted-foreground text-sm leading-relaxed mt-4">
+              Cryptographically verified access to the TrustGate Control Plane. Real-time prompt firewall, Merkle audit ledgers, synthetic identity defense, and sub-millisecond reverse proxy protection.
+            </p>
+          </div>
+
+          {/* Key Enclave Feature Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+            <div className="p-3.5 rounded-xl border border-line bg-panel/50 space-y-1">
+              <div className="flex items-center gap-2 text-mint font-mono text-xs font-bold">
+                <CheckCircle2 className="w-4 h-4 shrink-0" />
+                <span>FIDO2 Token Attestation</span>
+              </div>
+              <p className="text-[11px] text-muted-foreground leading-normal">
+                Hardware cryptographic key verification for L1 - L4 operator clearances.
+              </p>
+            </div>
+
+            <div className="p-3.5 rounded-xl border border-line bg-panel/50 space-y-1">
+              <div className="flex items-center gap-2 text-ambersoft font-mono text-xs font-bold">
+                <Zap className="w-4 h-4 shrink-0" />
+                <span>&lt; 0.25ms Enclave Proxy</span>
+              </div>
+              <p className="text-[11px] text-muted-foreground leading-normal">
+                Zero token waste with sub-millisecond AST and regex threat halts.
+              </p>
+            </div>
+
+            <div className="p-3.5 rounded-xl border border-line bg-panel/50 space-y-1">
+              <div className="flex items-center gap-2 text-cream font-mono text-xs font-bold">
+                <Database className="w-4 h-4 shrink-0" />
+                <span>Merkle Audit Ledger</span>
+              </div>
+              <p className="text-[11px] text-muted-foreground leading-normal">
+                Cryptographically anchored tamper-evident forensic transaction logs.
+              </p>
+            </div>
+
+            <div className="p-3.5 rounded-xl border border-line bg-panel/50 space-y-1">
+              <div className="flex items-center gap-2 text-coral font-mono text-xs font-bold">
+                <ShieldAlert className="w-4 h-4 shrink-0" />
+                <span>Universal Fraud Radar</span>
+              </div>
+              <p className="text-[11px] text-muted-foreground leading-normal">
+                Disposable emails, synthetic identities, and malicious URL intercepts.
+              </p>
+            </div>
+          </div>
+
+          {/* Live System Posture Bar */}
+          <div className="p-3.5 rounded-xl border border-line bg-black/40 flex items-center justify-between text-xs font-mono">
+            <span className="text-muted-foreground">Active Gateway Telemetry:</span>
+            <span className="text-mint font-bold flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-verdant tg-blink" />
+              12,408 AGENTS PROXIED · 0.22ms LATENCY
+            </span>
+          </div>
+
+          {onCancel && (
+            <div>
+              <button
+                type="button"
+                onClick={onCancel}
+                className="text-xs font-mono text-muted-foreground hover:text-cream flex items-center gap-1.5 transition-colors cursor-pointer"
+              >
+                <ArrowRight className="w-3.5 h-3.5 rotate-180" />
+                Return to Enclave Dashboard
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Right Column: Banani Card Container */}
+        <div className="lg:col-span-6">
+          <div 
+            className="w-full bg-panel border border-line rounded-2xl p-6 sm:p-8 shadow-2xl relative"
+            style={{ 
+              boxShadow: '0 0 55px rgba(245,158,11,.16)',
+              background: 'radial-gradient(circle at 50% 0%, rgba(245,158,11,0.06), transparent 75%), #111113'
+            }}
+          >
+            <div className="flex items-center justify-between pb-5 mb-5 border-b border-line">
+              <div>
+                <h2 className="text-white font-headings font-bold text-lg leading-tight">
+                  Enclave Operator Access
+                </h2>
+                <p className="text-muted-foreground text-xs mt-1">
+                  Authenticate to establish a zero-trust cryptographic session.
+                </p>
+              </div>
+              <div className="p-2 rounded-lg bg-ember/15 border border-ember/30 text-ambersoft">
+                <Lock className="w-5 h-5" />
+              </div>
+            </div>
+
+            <OperatorAuthForm 
+              mode={initialMode} 
+              onLoginSuccess={onLoginSuccess} 
+              showToast={showToast} 
+            />
+          </div>
+        </div>
+
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MODAL: OPERATOR AUTHENTICATION (POPUP DIALOG - BANANI THEME)
+// ─────────────────────────────────────────────────────────────────────────────
+function AuthModal({ isOpen, onClose, mode = 'login', setMode, onLoginSuccess, showToast }) {
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fadeIn">
       <div 
-        className="w-full max-w-md bg-panel border border-line rounded-xl p-6 sm:p-7 shadow-2xl relative"
-        style={{ boxShadow: '0 0 50px rgba(245,158,11,.15)' }}
+        className="w-full max-w-md bg-panel border border-line rounded-2xl p-6 sm:p-7 shadow-2xl relative"
+        style={{ 
+          boxShadow: '0 0 50px rgba(245,158,11,.18)',
+          background: 'radial-gradient(circle at 50% 0%, rgba(245,158,11,0.08), transparent 75%), #111113'
+        }}
       >
         <button 
           onClick={onClose}
-          className="absolute top-4 right-4 text-muted-foreground hover:text-white p-1 rounded-md hover:bg-secondary/40 transition-colors"
+          className="absolute top-4 right-4 text-muted-foreground hover:text-white p-1 rounded-md hover:bg-secondary/40 transition-colors cursor-pointer"
         >
           <X className="w-4 h-4" />
         </button>
@@ -3041,7 +3803,7 @@ function AuthModal({ isOpen, onClose, mode, setMode, onLoginSuccess, showToast }
         {/* Modal Header */}
         <div className="flex items-center gap-3 mb-5">
           <div 
-            className="w-10 h-10 rounded-md flex items-center justify-center shrink-0 shadow-lg"
+            className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-lg"
             style={{
               background: 'linear-gradient(135deg, #F59E0B, #C2410C 60%, #E11D48)',
               boxShadow: '0 0 20px rgba(245,158,11,.4)'
@@ -3055,156 +3817,15 @@ function AuthModal({ isOpen, onClose, mode, setMode, onLoginSuccess, showToast }
           </div>
         </div>
 
-        {/* Tab Toggle: Sign In vs Register */}
-        <div className="grid grid-cols-2 gap-1 p-1 bg-black/60 rounded-lg border border-line mb-5 text-xs font-medium">
-          <button
-            type="button"
-            onClick={() => setMode('login')}
-            className={`py-2 rounded-md transition-all cursor-pointer ${
-              mode === 'login' 
-                ? 'bg-secondary text-cream font-bold border border-line' 
-                : 'text-muted-foreground hover:text-cream'
-            }`}
-          >
-            Sign In
-          </button>
-          <button
-            type="button"
-            onClick={() => setMode('register')}
-            className={`py-2 rounded-md transition-all cursor-pointer ${
-              mode === 'register' 
-                ? 'bg-secondary text-cream font-bold border border-line' 
-                : 'text-muted-foreground hover:text-cream'
-            }`}
-          >
-            Register Operator
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {mode === 'register' && (
-            <>
-              <div>
-                <label className="block text-[11px] font-mono text-muted-foreground mb-1">OPERATOR FULL NAME</label>
-                <input
-                  type="text"
-                  required
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Alex Chen"
-                  className="w-full bg-black/70 border border-line rounded-lg px-3 py-2 text-xs text-cream outline-none focus:border-ember"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-mono text-muted-foreground mb-1">ENTERPRISE ORGANIZATION / LAB</label>
-                <input
-                  type="text"
-                  required
-                  value={org}
-                  onChange={(e) => setOrg(e.target.value)}
-                  placeholder="e.g. TrustGate Security Lab"
-                  className="w-full bg-black/70 border border-line rounded-lg px-3 py-2 text-xs text-cream outline-none focus:border-ember"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-mono text-muted-foreground mb-1">SECURITY CLEARANCE ROLE</label>
-                <select
-                  value={clearance}
-                  onChange={(e) => setClearance(e.target.value)}
-                  className="w-full bg-black/70 border border-line rounded-lg px-3 py-2 text-xs text-cream outline-none focus:border-ember font-mono"
-                >
-                  <option value="L4 · ENCLAVE CRYPTO OFFICER">Level 4 · Enclave Cryptographic Officer</option>
-                  <option value="L3 · SECOPS INCIDENT LEAD">Level 3 · SecOps Incident Lead</option>
-                  <option value="L2 · AI RISK ANALYST">Level 2 · AI Risk Analyst</option>
-                  <option value="L1 · GATEWAY OPERATOR">Level 1 · Gateway Operator</option>
-                </select>
-              </div>
-            </>
-          )}
-
-          <div>
-            <label className="block text-[11px] font-mono text-muted-foreground mb-1">WORK EMAIL</label>
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="operator@trustgate.dev"
-              className="w-full bg-black/70 border border-line rounded-lg px-3 py-2 text-xs text-cream outline-none focus:border-ember font-mono"
-            />
-          </div>
-
-          <div>
-            <label className="block text-[11px] font-mono text-muted-foreground mb-1">MASTER ENCLAVE PASSWORD</label>
-            <input
-              type="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••••••"
-              className="w-full bg-black/70 border border-line rounded-lg px-3 py-2 text-xs text-cream outline-none focus:border-ember font-mono"
-            />
-          </div>
-
-          <div className="p-2.5 rounded-lg bg-black/40 border border-line flex items-center justify-between text-[11px] font-mono text-muted-foreground">
-            <span className="flex items-center gap-1.5 text-mint">
-              <CheckCircle2 className="w-3.5 h-3.5" />
-              Hardware Key Simulation
-            </span>
-            <span className="text-cream">FIDO2 Ready</span>
-          </div>
-
-          <button
-            type="submit"
-            style={{
-              background: 'linear-gradient(135deg, #F59E0B, #D97706)',
-              boxShadow: '0 0 20px rgba(245, 158, 11, 0.35)'
-            }}
-            className="w-full py-2.5 rounded-md text-xs font-bold text-primary-foreground hover:opacity-95 transition-all cursor-pointer mt-2"
-          >
-            {mode === 'login' ? 'Sign In to Enclave' : 'Register Enclave Operator'}
-          </button>
-        </form>
-
-        {/* Toggle between Register and Login Links */}
-        <div className="mt-4 pt-4 border-t border-line text-center text-xs">
-          {mode === 'login' ? (
-            <p className="text-muted-foreground">
-              Don't have an operator clearance?{' '}
-              <button
-                type="button"
-                onClick={() => setMode('register')}
-                className="text-ambersoft font-medium hover:underline cursor-pointer"
-              >
-                Register here
-              </button>
-            </p>
-          ) : (
-            <p className="text-muted-foreground">
-              Already have an operator account?{' '}
-              <button
-                type="button"
-                onClick={() => setMode('login')}
-                className="text-ambersoft font-medium hover:underline cursor-pointer"
-              >
-                Sign In
-              </button>
-            </p>
-          )}
-
-          {/* Quick Demo Access */}
-          <button
-            type="button"
-            onClick={handleDemoLogin}
-            className="mt-3 w-full py-1.5 rounded bg-secondary hover:bg-line text-cream text-[11px] font-mono border border-line flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-ambersoft" />
-            ⚡ Fast Demo Operator Login (Alex Chen · L4)
-          </button>
-        </div>
+        <OperatorAuthForm 
+          mode={mode} 
+          onLoginSuccess={onLoginSuccess} 
+          showToast={showToast} 
+          isModal={true} 
+          onClose={onClose} 
+        />
       </div>
     </div>
   );
 }
+
