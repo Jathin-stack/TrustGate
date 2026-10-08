@@ -1,0 +1,177 @@
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: 'IBM Plex Mono', 'JetBrains Mono', monospace;
+  --font-body: 'Inter', sans-serif;
+  --font-headings: 'Geist', 'Inter', sans-serif;
+
+  /* Banani Prototype Exact Palette */
+  --color-background: #0A0A0B;
+  --color-panel: #141110;
+  --color-line: #3A2E22;
+  --color-secondary: #29211A;
+  --color-primary-foreground: #1A1005;
+  --color-muted-foreground: #A8A094;
+  --color-cream: #FAF7F2;
+  --color-ember: #F59E0B;
+  --color-ambersoft: #FBBF24;
+  --color-coral: #F43F5E;
+  --color-crimson: #E11D48;
+  --color-verdant: #10B981;
+  --color-mint: #34D399;
+  --color-rose: #FB7185;
+}
+
+@layer base {
+  body {
+    font-family: var(--font-body);
+    background-color: var(--color-background);
+    color: var(--color-cream);
+    overflow-x: hidden;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-headings);
+  }
+
+  code, pre, .font-mono {
+    font-family: var(--font-mono);
+  }
+}
+
+/* Custom Obsidian & Amber Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0A0A0B;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #29211A;
+  border-radius: 9999px;
+  border: 1px solid #3A2E22;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #3A2E22;
+}
+
+/* ───────────────────────────────────────────────────────────── */
+/* BANANI PROTOTYPE SIGNATURE GRAPHICS & ANIMATIONS              */
+/* ───────────────────────────────────────────────────────────── */
+
+.tg-vignette {
+  background: radial-gradient(circle at 50% 18%, rgba(245,158,11,0.10) 0%, rgba(245,158,11,0.03) 28%, rgba(10,10,11,0) 55%),
+              radial-gradient(circle at 12% 90%, rgba(194,65,12,0.08) 0%, rgba(10,10,11,0) 45%),
+              radial-gradient(circle at 88% 85%, rgba(244,63,94,0.06) 0%, rgba(10,10,11,0) 45%),
+              #0A0A0B;
+}
+
+.tg-grid-bg {
+  background-image: linear-gradient(rgba(245,158,11,0.05) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(245,158,11,0.05) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 35%, black 30%, transparent 75%);
+  -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 35%, black 30%, transparent 75%);
+}
+
+@keyframes tg-spin-slow {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes tg-orb-breathe {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.85;
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 1;
+  }
+}
+
+@keyframes tg-float {
+  0%, 100% {
+    transform: translateY(-5px);
+  }
+  50% {
+    transform: translateY(5px);
+  }
+}
+
+@keyframes tg-dash {
+  to {
+    stroke-dashoffset: -48;
+  }
+}
+
+@keyframes tg-blink {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@keyframes tg-feed-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.tg-spin-slow {
+  animation: tg-spin-slow 22s linear infinite;
+}
+
+.tg-spin-slower {
+  animation: tg-spin-slow 38s linear infinite reverse;
+}
+
+.tg-breathe {
+  animation: tg-orb-breathe 4.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.tg-float-1 {
+  animation: tg-float 6s ease-in-out infinite;
+}
+
+.tg-float-2 {
+  animation: tg-float 7s ease-in-out 0.8s infinite;
+}
+
+.tg-float-3 {
+  animation: tg-float 6.5s ease-in-out 1.6s infinite;
+}
+
+.tg-float-4 {
+  animation: tg-float 7.5s ease-in-out 2.2s infinite;
+}
+
+.tg-feed-item {
+  animation: tg-feed-in 0.6s ease both;
+}
+
+.tg-blink {
+  animation: tg-blink 1.6s ease infinite;
+}
+
+.tg-path-flow {
+  stroke-dasharray: 6 10;
+  animation: tg-dash 1.4s linear infinite;
+}
